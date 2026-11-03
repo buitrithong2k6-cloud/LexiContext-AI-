@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 
 <html lang="vi" class="dark">
-
+  
 <head>
 
+<!-- Khai báo cấu hình ứng dụng độc lập PWA -->
+    <link rel="manifest" href="./manifest.json">
+    
     <meta charset="UTF-8">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -4084,6 +4087,34 @@ callGeminiCanvasAPI = async function (promptText, schema, opt) {
 
         window.onload = () => { loadState(); setVaultFilter('all'); switchTab('vault'); };
 
+    </script>
+    <!-- ĐĂNG KÝ SERVICE WORKER VÀ BẬT BỘ NHỚ LƯU TRỮ VĨNH VIỄN -->
+    <script>
+      (function() {
+        // 1. Kích hoạt Service Worker để app không bị tải lại từ đầu khi chuyển đổi đa nhiệm
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+              .then((reg) => {
+                console.log('Service Worker đã kích hoạt thành công với phạm vi:', reg.scope);
+              })
+              .catch((err) => {
+                console.warn('Lỗi kích hoạt Service Worker:', err);
+              });
+          });
+        }
+
+        // 2. Yêu cầu hệ điều hành bảo vệ dữ liệu bộ nhớ không bị tự xóa dọn dẹp
+        if (navigator.storage && navigator.storage.persist) {
+          navigator.storage.persist().then((persistent) => {
+            if (persistent) {
+              console.log('Bộ nhớ lưu trữ vĩnh viễn (Persistent Storage) đã được cấp quyền!');
+            } else {
+              console.log('Hệ thống đang chạy chế độ lưu trữ tiêu chuẩn.');
+            }
+          });
+        }
+      })();
     </script>
 
 </body>
