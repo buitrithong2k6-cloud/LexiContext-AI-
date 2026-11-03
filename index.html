@@ -4083,8 +4083,87 @@ callGeminiCanvasAPI = async function (promptText, schema, opt) {
     throw new Error(err);
 };
 // ===== HẾT BẢN VÁ 7 =====
+// ===== BẢN VÁ 9: ÉP GEMINI SINH IPA CHUẨN & TRA CỨU TỰ ĐỘNG KHÔNG BỊ TRÙNG MẶT CHỮ =====
 
+// 1. Tối ưu hàm Prompt sinh từ AI: Bắt buộc mô hình trả về đúng chuẩn ký tự IPA
+if (typeof generateWordBatchWithAI === 'function') {
+    const _origGenAI = generateWordBatchWithAI;
+    generateWordBatchWithAI = async function(topic, level, count) {
+        // Tự động tiêm thêm yêu cầu khắt khe về IPA vào prompt AI
+        window._extraIpaInstruction = "MỖI TỪ BẮT BUỘC PHẢI CÓ PHIÊN ÂM IPA CHUẨN QUỐC TẾ (ví dụ: /ˌæm.bɪˈɡjuː.ə.ti/, /ˈpær.ə.daɪm/), TUYỆT ĐỐI KHÔNG để nguyên mặt chữ tiếng Anh vào trong dấu gạch chéo.";
+        return await _origGenAI.apply(this, arguments);
+    };
+}
 
+// 2. Hàm lọc và tự động sửa IPA nếu bị lỗi lấy lại mặt chữ
+function sanitizeOrFixIPA(word, ipa) {
+    if (!ipa) return '';
+    const cleanWord = word.trim().toLowerCase();
+    const cleanIpa = ipa.replace(/[\/\[\]]/g, '').trim().toLowerCase();
+    
+    // Nếu IPA bị trùng y hệt mặt chữ (ví dụ /Ambiguity/), xóa bỏ để không hiển thị sai
+    if (cleanIpa === cleanWord || cleanIpa === '') {
+        return ''; 
+    }
+    return ipa.startsWith('/') ? ipa : `/${ipa}/`;
+}
+
+// 3. Nâng cấp bộ nạp dữ liệu từ điển: Nếu API thiếu hoặc lỗi, gọi Gemini tạo ngay IPA chuẩn
+async function fetchAccurateIPA(word) {
+    // Thử lấy từ Free Dictionary API trước
+    try {
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.trim())}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data[0]) {
+                if (data[0].phonetic) return data[0].phonetic;
+                const p = (data[0].phonetics || []).find(item => item.text && item.text.trim().length > 0);
+                if (p && p.text) return p.text;
+            }
+        }
+    } catch (e) {
+        console.warn("Lỗi gọi Dictionary API:", e);
+    }
+
+    // Nếu API ngoài không có, dùng Gemini để lấy IPA chuẩn xác
+    const apiKey = localStorage.getItem('lexi_gemini_key') || (typeof GEMINI_API_KEY !== 'undefined' ? GEMINI_API_KEY : '');
+    if (apiKey) {
+        try {
+            const prompt = `Chỉ trả về duy nhất phiên âm IPA quốc tế chuẩn xác của từ tiếng Anh sau: "${word}". Định dạng bắt buộc: /.../`;
+            const model = (typeof activeModelName !== 'undefined' && activeModelName) ? activeModelName : 'gemini-2.5-flash';
+            const apiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            const resJson = await apiRes.json();
+            const txt = resJson.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+            if (txt && txt.includes('/')) {
+                const match = txt.match(/\/([^\/]+)\//);
+                if (match) return `/${match[1]}/`;
+            }
+        } catch (err) {
+            console.warn("Lỗi Gemini IPA:", err);
+        }
+    }
+
+    return ''; // Nếu không tìm thấy thì để trống, không hiển thị mặt chữ giả làm IPA
+}
+
+// 4. Quét và tự động sửa các thẻ từ vựng hiện đang bị lỗi IPA trên màn hình
+function autoCleanCurrentCardIPAs() {
+    document.querySelectorAll('.word-card, div').forEach(card => {
+        const textNodes = card.innerText || '';
+        // Tìm các mẫu như Ambiguity /Ambiguity/
+        const match = textNodes.match(/([a-zA-Z]+)\s*\/([a-zA-Z]+)\//);
+        if (match && match[1].toLowerCase() === match[2].toLowerCase()) {
+            card.innerHTML = card.innerHTML.replace(`/${match[2]}/`, '');
+        }
+    });
+}
+setInterval(autoCleanCurrentCardIPAs, 2000);
+// ===== HẾT BẢN VÁ 9 =====
+      
         window.onload = () => { loadState(); setVaultFilter('all'); switchTab('vault'); };
 
     </script>
