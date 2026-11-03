@@ -1,0 +1,4091 @@
+<!DOCTYPE html>
+
+<html lang="vi" class="dark">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>LexiContext AI Pro - Từ Vựng Ngữ Cảnh, Chủ Đề, Y Khoa & Phản Xạ CEFR</title>
+
+    <!-- Tailwind CSS -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Phosphor Icons -->
+
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Tone.js -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+
+    <script>
+
+        tailwind.config = {
+
+            darkMode: 'class',
+
+            theme: {
+
+                extend: {
+
+                    fontFamily: {
+
+                        sans: ['Inter', 'sans-serif'],
+
+                        mono: ['JetBrains Mono', 'monospace'],
+
+                    },
+
+                    colors: {
+
+                        slate: { 850: '#151e2e', 950: '#020617' }
+
+                    },
+
+                    animation: {
+
+                        'fade-in': 'fadeIn 0.22s ease-out',
+
+                        'slide-up': 'slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
+
+                    },
+
+                    keyframes: {
+
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+
+                        slideUp: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    </script>
+
+
+    <style>
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+
+        ::-webkit-scrollbar-track { background: #0f172a; }
+
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .glass-card {
+
+            background: rgba(30, 41, 59, 0.75);
+
+            backdrop-filter: blur(14px);
+
+            border: 1px solid rgba(255, 255, 255, 0.08);
+
+        }
+
+        .glow-indigo { box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.35); }
+
+        .glow-emerald { box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.35); }
+
+        .glow-rose { box-shadow: 0 0 25px -5px rgba(244, 63, 94, 0.35); }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .selectable-text { user-select: text; -webkit-user-select: text; cursor: text; }
+
+        .interactive-word {
+
+            cursor: pointer;
+
+            border-radius: 4px;
+
+            padding: 0 2px;
+
+            transition: all 0.15s ease;
+
+        }
+
+        .interactive-word:hover {
+
+            background-color: rgba(99, 102, 241, 0.28);
+
+            color: #e0e7ff;
+
+        }
+
+        @keyframes pulse-mic {
+
+            0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); }
+
+            70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
+
+            100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+
+        }
+
+        .mic-active {
+
+            animation: pulse-mic 1.4s infinite;
+
+            background-color: #e11d48 !important;
+
+            color: #fff !important;
+
+        }
+
+    </style>
+
+</head>
+
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950 overflow-x-hidden pb-16">
+
+
+    <!-- THANH NỔI BẮT TỪ / CỤM TỪ KHI BÔI ĐEN -->
+
+    <div id="floating-selection-bar" class="fixed top-28 left-1/2 -translate-x-1/2 z-50 hidden w-[94%] max-w-xl glass-card p-3 rounded-2xl border border-amber-500/60 shadow-2xl animate-slide-up">
+
+        <div class="flex flex-wrap items-center justify-between gap-2">
+
+            <div class="flex items-center gap-2 min-w-0 flex-1">
+
+                <span class="px-2 py-1 rounded-lg bg-amber-500/20 text-amber-300 font-mono text-xs font-bold shrink-0">🔍 Đã bôi đen:</span>
+
+                <span id="selected-phrase-preview" class="text-sm font-bold text-white truncate"></span>
+
+            </div>
+
+            <div class="flex items-center gap-1.5 shrink-0">
+
+                <button type="button" onclick="speakText(currentSelectedPhrase)" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 text-xs font-medium flex items-center gap-1">
+
+                    <i class="ph-fill ph-speaker-high"></i> Nghe
+
+                </button>
+
+                <button type="button" onclick="openInstantLookupModal(currentSelectedPhrase, currentSelectedContext)" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs flex items-center gap-1 shadow">
+
+                    <i class="ph-fill ph-sparkle"></i> Tra cứu sâu & Tạo thẻ từ ngay
+
+                </button>
+
+                <button type="button" onclick="hideSelectionBar()" class="p-1.5 rounded-lg bg-slate-900 text-slate-400 hover:text-white">
+
+                    <i class="ph ph-x"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- STICKY TOP HEADER & NAVIGATION -->
+
+    <header class="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-xl border-b border-slate-800/90 shadow-xl">
+
+        <div class="max-w-6xl mx-auto px-3 sm:px-6">
+
+            <div class="h-14 flex items-center justify-between gap-2">
+
+                <div class="flex items-center gap-2.5 cursor-pointer" onclick="switchTab('vault')">
+
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-emerald-400 p-[1px] glow-indigo">
+
+                        <div class="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
+
+                            <i class="ph-fill ph-brain text-lg text-indigo-400"></i>
+
+                        </div>
+
+                    </div>
+
+                    <div>
+
+                        <div class="flex items-center gap-1.5">
+
+                            <h1 class="font-bold text-base sm:text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">LexiContext</h1>
+
+                            <span class="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold">AI Pro A1-C2</span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="flex items-center gap-1.5 sm:gap-2">
+
+                    <button type="button" onclick="promptManualInstantLookup()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-xs font-semibold text-amber-300 transition" title="Tra cứu & Tạo nhanh bất kỳ từ/cụm từ nào">
+
+                        <i class="ph-fill ph-magnifying-glass-plus text-sm"></i>
+
+                        <span class="hidden sm:inline">Tra & Tạo Nhanh</span>
+
+                    </button>
+
+                    <button type="button" onclick="openTopicManagerModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-semibold text-emerald-300 transition" title="Quản lý, chỉnh sửa, định nghĩa Chủ đề & Gợi ý AI">
+
+                        <i class="ph-fill ph-folders text-sm"></i>
+
+                        <span>Chủ đề</span>
+
+                    </button>
+
+                    <button type="button" onclick="openSettingsModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-300 transition" title="Cấu hình Gemini AI & Sao lưu dữ liệu">
+
+                        <i class="ph-fill ph-gear-six text-sm text-indigo-400"></i>
+
+                        <span class="hidden sm:inline">Cài đặt & Backup</span>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- Thanh Điều Hướng 4 Tab Cốt Lõi -->
+
+            <nav class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-2 border-t border-slate-900">
+
+                <button type="button" onclick="switchTab('vault')" id="nav-vault" class="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all">
+
+                    <i class="ph-fill ph-books text-base"></i>
+
+                    <span>Kho từ vựng</span>
+
+                    <span id="badge-vault" class="text-[11px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-200 font-mono">0</span>
+
+                </button>
+
+                <button type="button" onclick="switchTab('add')" id="nav-add" class="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all">
+
+                    <i class="ph-fill ph-sparkle text-base text-amber-400"></i>
+
+                    <span>Thêm từ & AI Chủ Đề</span>
+
+                </button>
+
+                <button type="button" onclick="switchTab('quiz')" id="nav-quiz" class="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all">
+
+                    <i class="ph-fill ph-lightning text-base text-indigo-400"></i>
+
+                    <span>Luyện Ngữ Cảnh & Phát Âm</span>
+
+                </button>
+
+                <button type="button" onclick="switchTab('mistakes')" id="nav-mistakes" class="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all">
+
+                    <i class="ph-fill ph-skull text-base text-rose-400"></i>
+
+                    <span>Trạm Sửa Sai</span>
+
+                    <span id="badge-mistakes" class="text-[11px] px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 font-mono">0</span>
+
+                </button>
+
+            </nav>
+
+        </div>
+
+    </header>
+
+
+    <!-- MAIN CONTENT CONTAINER -->
+
+    <main class="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 py-5 space-y-6">
+
+
+        <!-- ==========================================
+
+             TAB 1: KHO TỪ VỰNG, PHÂN TẦNG CHỦ ĐỀ, CEFR & Y KHOA
+
+             ========================================== -->
+
+        <section id="tab-vault" class="space-y-5 animate-fade-in">
+
+            <!-- Thống kê Mastery -->
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+
+                <div onclick="setVaultFilter('all')" class="glass-card p-4 rounded-2xl cursor-pointer hover:border-indigo-500/40 transition group">
+
+                    <div class="flex items-center justify-between mb-1.5">
+
+                        <span class="text-xs font-medium text-slate-400">Tổng vốn từ</span>
+
+                        <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition">
+
+                            <i class="ph-fill ph-stack text-lg"></i>
+
+                        </div>
+
+                    </div>
+
+                    <div class="flex items-baseline gap-2">
+
+                        <h3 id="stat-total" class="text-2xl sm:text-3xl font-bold text-white font-mono">0</h3>
+
+                        <span class="text-xs text-slate-400">từ & cụm</span>
+
+                    </div>
+
+                </div>
+
+
+                <div onclick="setVaultFilter('mastered')" class="glass-card p-4 rounded-2xl cursor-pointer hover:border-emerald-500/40 transition group">
+
+                    <div class="flex items-center justify-between mb-1.5">
+
+                        <span class="text-xs font-medium text-emerald-400/90">Đã thuộc làu (≥80%)</span>
+
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition">
+
+                            <i class="ph-fill ph-seal-check text-lg"></i>
+
+                        </div>
+
+                    </div>
+
+                    <div class="flex items-baseline gap-2">
+
+                        <h3 id="stat-mastered" class="text-2xl sm:text-3xl font-bold text-emerald-400 font-mono">0</h3>
+
+                        <span class="text-xs text-slate-400">vững ngữ cảnh</span>
+
+                    </div>
+
+                </div>
+
+
+                <div onclick="setVaultFilter('learning')" class="glass-card p-4 rounded-2xl cursor-pointer hover:border-amber-500/40 transition group">
+
+                    <div class="flex items-center justify-between mb-1.5">
+
+                        <span class="text-xs font-medium text-amber-400/90">Đang ngấm (40-79%)</span>
+
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition">
+
+                            <i class="ph-fill ph-hourglass-medium text-lg"></i>
+
+                        </div>
+
+                    </div>
+
+                    <div class="flex items-baseline gap-2">
+
+                        <h3 id="stat-learning" class="text-2xl sm:text-3xl font-bold text-amber-400 font-mono">0</h3>
+
+                        <span class="text-xs text-slate-400">cần cọ xát</span>
+
+                    </div>
+
+                </div>
+
+
+                <div onclick="setVaultFilter('weak')" class="glass-card p-4 rounded-2xl cursor-pointer hover:border-rose-500/40 transition group">
+
+                    <div class="flex items-center justify-between mb-1.5">
+
+                        <span class="text-xs font-medium text-rose-400/90">Chưa thuộc (&lt;40%)</span>
+
+                        <div class="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 group-hover:scale-110 transition">
+
+                            <i class="ph-fill ph-warning-octagon text-lg"></i>
+
+                        </div>
+
+                    </div>
+
+                    <div class="flex items-baseline gap-2">
+
+                        <h3 id="stat-weak" class="text-2xl sm:text-3xl font-bold text-rose-400 font-mono">0</h3>
+
+                        <span class="text-xs text-slate-400">báo động đỏ</span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Bộ lọc Đa Tầng -->
+
+            <div class="glass-card p-4 rounded-2xl space-y-3">
+
+                <div class="flex items-center justify-between gap-2">
+
+                    <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 flex-1" id="topic-pills-bar"></div>
+
+                    <button type="button" onclick="openTopicManagerModal()" class="shrink-0 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-emerald-500/30 text-xs font-semibold text-emerald-300 flex items-center gap-1">
+
+                        <i class="ph-fill ph-sliders-horizontal"></i> Quản lý & AI Gợi ý
+
+                    </button>
+
+                </div>
+
+
+                <!-- Banner Định nghĩa Chủ đề -->
+
+                <div id="active-topic-banner" class="hidden p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 flex flex-wrap items-center justify-between gap-2 text-xs">
+
+                    <div>
+
+                        <span class="font-bold text-emerald-300" id="active-topic-name"></span>:
+
+                        <span class="text-slate-300 ml-1" id="active-topic-desc"></span>
+
+                    </div>
+
+                    <div class="flex items-center gap-2">
+
+                        <button type="button" onclick="aiSuggestWordsForActiveTopic()" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center gap-1">
+
+                            <i class="ph-fill ph-sparkle"></i> AI Gợi ý thêm từ cho chủ đề này
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between pt-2 border-t border-slate-800/80">
+
+                    <div class="relative flex-1">
+
+                        <i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+
+                        <input type="text" id="vault-search" oninput="renderVault()" placeholder="Tìm từ, nghĩa, tiền tố/gốc từ/hậu tố y khoa, collocation hoặc ghi chú..." class="w-full pl-10 pr-4 py-2 bg-slate-950/90 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+
+                    </div>
+
+
+                    <!-- Lọc CEFR A1 -> C2 -->
+
+                    <div class="flex items-center gap-1 overflow-x-auto no-scrollbar">
+
+                        <span class="text-[11px] text-slate-400 mr-1 shrink-0">Cấp độ:</span>
+
+                        <button type="button" onclick="setCefrVaultFilter('ALL')" id="cfilter-ALL" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white">Tất cả</button>
+
+                        <button type="button" onclick="setCefrVaultFilter('A1')" id="cfilter-A1" class="px-2 py-1.5 rounded-lg text-xs font-mono text-slate-400 bg-slate-950 border border-slate-800">A1</button>
+
+                        <button type="button" onclick="setCefrVaultFilter('A2')" id="cfilter-A2" class="px-2 py-1.5 rounded-lg text-xs font-mono text-slate-400 bg-slate-950 border border-slate-800">A2</button>
+
+                        <button type="button" onclick="setCefrVaultFilter('B1')" id="cfilter-B1" class="px-2 py-1.5 rounded-lg text-xs font-mono text-slate-400 bg-slate-950 border border-slate-800">B1</button>
+
+                        <button type="button" onclick="setCefrVaultFilter('B2')" id="cfilter-B2" class="px-2 py-1.5 rounded-lg text-xs font-mono text-slate-400 bg-slate-950 border border-slate-800">B2</button>
+
+                        <button type="button" onclick="setCefrVaultFilter('C1')" id="cfilter-C1" class="px-2 py-1.5 rounded-lg text-xs font-mono text-slate-400 bg-slate-950 border border-slate-800">C1</button>
+
+                        <button type="button" onclick="setCefrVaultFilter('C2')" id="cfilter-C2" class="px-2 py-1.5 rounded-lg text-xs font-mono text-slate-400 bg-slate-950 border border-slate-800">C2</button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Danh sách thẻ từ vựng -->
+
+            <div id="vault-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 selectable-text"></div>
+
+        </section>
+
+
+        <!-- ==========================================
+
+             TAB 2: THÊM TỪ THÔNG MINH VỚI AI
+
+             ========================================== -->
+
+        <section id="tab-add" class="hidden max-w-3xl mx-auto space-y-6 animate-fade-in">
+
+            <div class="glass-card p-5 sm:p-6 rounded-2xl border border-indigo-500/30 glow-indigo relative overflow-hidden">
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+
+                    <div>
+
+                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20 mb-2">
+
+                            <i class="ph-fill ph-magic-wand"></i> Trợ lý Phân tích Từ, Chủ đề, CEFR & Giải phẫu Y khoa
+
+                        </span>
+
+                        <h2 class="text-lg sm:text-xl font-bold text-white">Nhập 1 từ/cụm từ hoặc dán cả đoạn văn</h2>
+
+                        <p class="text-xs sm:text-sm text-slate-400 mt-0.5">AI tự động điền đầy đủ 100% các mục: Nghĩa, Câu ngữ cảnh, Dịch câu, Giải thích, Chủ đề, Cấp độ A1–C2.</p>
+
+                    </div>
+
+                    <div class="shrink-0">
+
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-indigo-300 mb-1">Cấp độ câu ngữ cảnh (CEFR)</label>
+
+                        <select id="cefr-level-select" class="w-full sm:w-auto px-3 py-2 bg-slate-950 border border-indigo-500/40 rounded-xl text-xs font-semibold text-indigo-200 focus:outline-none">
+
+                            <option value="Auto" selected>Tự động theo từ (A1 - C2)</option>
+
+                            <option value="A1">A1 - Sơ cấp</option>
+
+                            <option value="A2">A2 - Sơ trung cấp</option>
+
+                            <option value="B1">B1 - Trung cấp</option>
+
+                            <option value="B2">B2 - Trung cao cấp</option>
+
+                            <option value="C1">C1 - Cao cấp</option>
+
+                            <option value="C2">C2 - Chuyên sâu</option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div class="space-y-3">
+
+                    <textarea id="ai-quick-input" rows="3" placeholder="Nhập 1 từ (VD: appendicitis, meticulous) HOẶC dán cả một đoạn văn dài từ 2 câu trở lên..." class="w-full px-4 py-3 bg-slate-950 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-400 leading-relaxed"></textarea>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+
+                        <div class="flex flex-wrap items-center gap-1.5 text-xs">
+
+                            <span class="text-slate-400">Thử nhanh:</span>
+
+                            <button type="button" onclick="fillQuickSample('appendicitis')" class="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-300 border border-rose-500/30">appendicitis (Y khoa)</button>
+
+                            <button type="button" onclick="fillQuickSample('meticulous')" class="px-2.5 py-1 rounded-lg bg-slate-800 text-indigo-300 border border-slate-700">meticulous</button>
+
+                            <button type="button" onclick="fillSampleParagraph()" class="px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+
+                                <i class="ph-fill ph-article"></i> Đoạn mẫu Y khoa
+
+                            </button>
+
+                        </div>
+
+                        <button type="button" onclick="analyzeWithAI()" id="btn-ai-analyze" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg transition shrink-0">
+
+                            <i class="ph-fill ph-sparkle text-lg text-amber-300"></i>
+
+                            <span>AI Phân Tích & Điền Đầy Đủ Form</span>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div id="extracted-words-panel" class="hidden mt-5 pt-5 border-t border-slate-800/90 space-y-3 animate-slide-up">
+
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+
+                        <h4 class="text-xs sm:text-sm font-bold text-emerald-300 flex items-center gap-1.5">
+
+                            <i class="ph-fill ph-list-magnifying-glass text-base"></i>
+
+                            <span>Các từ AI trích xuất (Bấm "Nạp xuống Form" hoặc "Lưu nhanh"):</span>
+
+                        </h4>
+
+                        <button type="button" onclick="document.getElementById('extracted-words-panel').classList.add('hidden')" class="text-xs text-slate-400 hover:text-white">Đóng</button>
+
+                    </div>
+
+                    <div id="extracted-words-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Biểu mẫu chi tiết của Từ vựng -->
+
+            <form id="word-form" onsubmit="saveWordFromForm(event)" class="glass-card p-5 sm:p-6 rounded-2xl space-y-5">
+
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+
+                    <h3 id="form-mode-title" class="font-bold text-base text-white flex items-center gap-2">
+
+                        <i class="ph ph-note-pencil text-indigo-400 text-lg"></i>
+
+                        <span>Chi tiết Từ vựng, Chủ đề, Cấp độ CEFR & Ngữ cảnh</span>
+
+                    </h3>
+
+                    <button type="button" onclick="resetWordForm()" class="text-xs text-slate-400 hover:text-white flex items-center gap-1">
+
+                        <i class="ph ph-arrow-counter-clockwise"></i> Làm mới form
+
+                    </button>
+
+                </div>
+
+
+                <input type="hidden" id="form-id">
+
+
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+
+                    <div class="sm:col-span-4">
+
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Từ vựng / Cụm từ <span class="text-rose-400">*</span></label>
+
+                        <input type="text" id="form-word" required placeholder="VD: appendicitis" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:border-indigo-500 focus:outline-none">
+
+                    </div>
+
+                    <div class="sm:col-span-2">
+
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Từ loại</label>
+
+                        <input type="text" id="form-pos" placeholder="noun / verb" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:border-indigo-500 focus:outline-none">
+
+                    </div>
+
+                    <div class="sm:col-span-3">
+
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Phiên âm IPA</label>
+
+                        <div class="flex gap-1.5">
+
+                            <input type="text" id="form-ipa" placeholder="/.../" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-mono text-indigo-300 focus:border-indigo-500 focus:outline-none">
+
+                            <button type="button" onclick="speakInputWord()" class="px-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600 text-slate-200 transition shrink-0" title="Nghe">
+
+                                <i class="ph-fill ph-speaker-high"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <div class="sm:col-span-3">
+
+                        <label class="block text-xs font-medium text-amber-300 mb-1">Cấp bậc CEFR</label>
+
+                        <select id="form-cefr" class="w-full px-3 py-2.5 bg-slate-950 border border-amber-500/40 rounded-xl text-xs font-mono font-bold text-amber-300 focus:outline-none">
+
+                            <option value="A1">A1 - Cơ bản</option>
+
+                            <option value="A2">A2 - Sơ cấp</option>
+
+                            <option value="B1">B1 - Trung cấp</option>
+
+                            <option value="B2" selected>B2 - Trung cao cấp</option>
+
+                            <option value="C1">C1 - Cao cấp</option>
+
+                            <option value="C2">C2 - Chuyên sâu</option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+
+                    <div class="sm:col-span-4">
+
+                        <label class="block text-xs font-medium text-emerald-300 mb-1">Chủ đề <span class="text-rose-400">*</span></label>
+
+                        <input type="text" id="form-topic" list="topics-datalist" oninput="checkIfMedicalTopicInput()" required placeholder="VD: Y khoa - Lâm sàng" class="w-full px-3.5 py-2.5 bg-slate-950 border border-emerald-500/40 rounded-xl text-sm text-emerald-200 focus:outline-none">
+
+                        <datalist id="topics-datalist"></datalist>
+
+                    </div>
+
+                    <div class="sm:col-span-3">
+
+                        <label class="block text-xs font-medium text-sky-300 mb-1">Độ khó câu ngữ cảnh</label>
+
+                        <select id="form-sentence-difficulty" class="w-full px-3 py-2.5 bg-slate-950 border border-sky-500/30 rounded-xl text-xs font-semibold text-sky-200">
+
+                            <option value="Dễ (A1-A2)">Câu Dễ (A1-A2)</option>
+
+                            <option value="Trung bình (B1-B2)" selected>Trung bình (B1-B2)</option>
+
+                            <option value="Khó / Học thuật (C1-C2)">Câu Khó / Học thuật (C1-C2)</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="sm:col-span-5">
+
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Nghĩa tiếng Việt cô đọng <span class="text-rose-400">*</span></label>
+
+                        <input type="text" id="form-meaning" required placeholder="VD: Viêm ruột thừa cấp..." class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none">
+
+                    </div>
+
+                </div>
+
+
+                <!-- KHỐI GIẢI PHẪU Y KHOA -->
+
+                <div class="rounded-2xl bg-rose-950/20 border border-rose-500/30 p-4 space-y-3">
+
+                    <div class="flex items-center justify-between cursor-pointer" onclick="toggleMedAnatomyBox()">
+
+                        <span class="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+
+                            <i class="ph-fill ph-first-aid-kit text-base"></i>
+
+                            <span>Giải phẫu Thuật ngữ Y khoa (Tiền tố • Gốc từ • Yếu tố nối • Hậu tố)</span>
+
+                        </span>
+
+                        <span class="text-[11px] font-mono text-rose-300 underline">Bấm để Mở / Thu gọn</span>
+
+                    </div>
+
+                    <div id="med-anatomy-fields" class="grid grid-cols-1 sm:grid-cols-4 gap-2.5 pt-1">
+
+                        <div>
+
+                            <label class="block text-[11px] text-slate-400 mb-1">1. Tiền tố (Prefix)</label>
+
+                            <input type="text" id="form-med-prefix" placeholder="VD: hyper-, brady-" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-rose-200">
+
+                        </div>
+
+                        <div>
+
+                            <label class="block text-[11px] text-slate-400 mb-1">2. Gốc từ (Root)</label>
+
+                            <input type="text" id="form-med-root" placeholder="VD: appendic" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-amber-200">
+
+                        </div>
+
+                        <div>
+
+                            <label class="block text-[11px] text-slate-400 mb-1">3. Yếu tố nối</label>
+
+                            <input type="text" id="form-med-combining" placeholder="VD: -o-" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-sky-200">
+
+                        </div>
+
+                        <div>
+
+                            <label class="block text-[11px] text-slate-400 mb-1">4. Hậu tố (Suffix)</label>
+
+                            <input type="text" id="form-med-suffix" placeholder="VD: -itis" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-emerald-200">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <div>
+
+                        <label class="block text-xs font-medium text-slate-300 mb-1.5">Câu vận dụng thực tế <span class="text-rose-400">*</span></label>
+
+                        <textarea id="form-example" rows="3" required placeholder="Example sentence..." class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none"></textarea>
+
+                    </div>
+
+                    <div>
+
+                        <label class="block text-xs font-medium text-emerald-300 mb-1.5">Dịch nghĩa tiếng Việt <span class="text-rose-400">*</span></label>
+
+                        <textarea id="form-example-trans" rows="3" placeholder="Bản dịch tiếng Việt..." class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-200 focus:outline-none"></textarea>
+
+                    </div>
+
+                </div>
+
+
+                <div>
+
+                    <label class="block text-xs font-medium text-slate-300 mb-1.5">Cụm từ cố định / Giới từ đi kèm (Collocations)</label>
+
+                    <input type="text" id="form-collocations" placeholder="VD: acute appendicitis, ruptured appendicitis" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-emerald-300 font-mono focus:outline-none">
+
+                </div>
+
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <div>
+
+                        <label class="block text-xs font-medium text-indigo-300 mb-1.5 flex items-center gap-1">
+
+                            <i class="ph-fill ph-robot"></i> Giải thích ngữ cảnh & Sắc thái (AI)
+
+                        </label>
+
+                        <textarea id="form-explanation" rows="4" placeholder="Giải thích chi tiết..." class="w-full px-3.5 py-2.5 bg-slate-950 border border-indigo-500/30 rounded-xl text-sm text-slate-200 focus:outline-none"></textarea>
+
+                    </div>
+
+                    <div>
+
+                        <label class="block text-xs font-medium text-amber-300 mb-1.5 flex items-center gap-1">
+
+                            <i class="ph-fill ph-lightbulb"></i> Ghi chú cá nhân / Mẹo nhớ của riêng tôi
+
+                        </label>
+
+                        <textarea id="form-note" rows="4" placeholder="Ghi chú cá nhân..." class="w-full px-3.5 py-2.5 bg-slate-950 border border-amber-500/30 rounded-xl text-sm text-amber-100 focus:outline-none"></textarea>
+
+                    </div>
+
+                </div>
+
+
+                <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3">
+
+                    <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+
+                        <i class="ph-fill ph-question text-indigo-400"></i> Câu hỏi kiểm tra đục lỗ (Dùng <code class="text-amber-300">___</code>) & Bản dịch câu hỏi
+
+                    </span>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                        <input type="text" id="form-quiz-sentence" placeholder="Câu tiếng Anh đục lỗ ___" class="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-white">
+
+                        <input type="text" id="form-quiz-trans" placeholder="Bản dịch tiếng Việt câu hỏi..." class="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-emerald-300">
+
+                    </div>
+
+                </div>
+
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+
+                    <button type="button" onclick="switchTab('vault')" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm font-medium text-slate-300 transition">Hủy</button>
+
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm flex items-center gap-2 shadow-lg transition">
+
+                        <i class="ph-bold ph-check"></i>
+
+                        <span>Lưu vào Kho từ vựng</span>
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+
+        <!-- ==========================================
+
+             TAB 3: PHÒNG LUYỆN NGỮ CẢNH + CHẤM PHÁT ÂM CEFR (A1-C2)
+
+             ========================================== -->
+
+        <section id="tab-quiz" class="hidden max-w-3xl mx-auto space-y-5 animate-fade-in">
+
+            <div class="glass-card p-4 rounded-2xl space-y-3">
+
+                <div class="flex flex-wrap items-center justify-between gap-3">
+
+                    <div class="flex items-center gap-3">
+
+                        <div class="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+
+                            <i class="ph-fill ph-target text-xl"></i>
+
+                        </div>
+
+                        <div>
+
+                            <h2 class="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
+
+                                <span>Phòng Kiểm Tra Ngữ Cảnh & Luyện Đọc CEFR</span>
+
+                                <span id="quiz-mode-badge" class="text-[11px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Ưu tiên từ chưa thuộc</span>
+
+                            </h2>
+
+                            <p class="text-[11px] text-amber-300 mt-0.5">💡 Mẹo: <strong>Chạm trực tiếp vào bất kỳ từ nào trong câu hỏi</strong> để xem nghĩa và tạo thẻ từ ngay tại chỗ!</p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="flex flex-wrap items-center gap-2.5">
+
+                        <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+
+                            <button type="button" onclick="setQuizInputMode('mcq')" id="qmode-mcq" class="px-2.5 py-1.5 rounded-lg font-semibold bg-indigo-600 text-white transition">4 Đáp án</button>
+
+                            <button type="button" onclick="setQuizInputMode('typing')" id="qmode-typing" class="px-2.5 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white transition">Tự gõ từ</button>
+
+                        </div>
+
+                        <span id="quiz-streak" class="text-sm font-bold font-mono text-amber-400">🔥 0</span>
+
+                        <button type="button" onclick="nextQuizQuestion()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 flex items-center gap-1">
+
+                            <i class="ph ph-arrows-clockwise"></i> Đổi câu
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-slate-800/80 text-xs">
+
+                    <div class="flex items-center gap-2">
+
+                        <span class="text-slate-400 shrink-0">Chủ đề:</span>
+
+                        <select id="quiz-topic-filter" onchange="generateQuizQuestion()" class="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-emerald-300 font-medium"></select>
+
+                    </div>
+
+                    <div class="flex items-center gap-2">
+
+                        <span class="text-slate-400 shrink-0">Cấp bậc CEFR:</span>
+
+                        <select id="quiz-cefr-filter" onchange="generateQuizQuestion()" class="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-amber-300 font-mono">
+
+                            <option value="ALL">Tất cả cấp bậc (A1 - C2)</option>
+
+                            <option value="A1">Mức A1 (Cơ bản)</option>
+
+                            <option value="A2">Mức A2 (Sơ cấp)</option>
+
+                            <option value="B1">Mức B1 (Trung cấp)</option>
+
+                            <option value="B2">Mức B2 (Trung cao cấp)</option>
+
+                            <option value="C1">Mức C1 (Cao cấp)</option>
+
+                            <option value="C2">Mức C2 (Thành thạo)</option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div id="quiz-container" class="glass-card p-5 sm:p-7 rounded-3xl border border-slate-800 space-y-5 relative overflow-hidden selectable-text"></div>
+
+        </section>
+
+
+        <!-- ==========================================
+
+             TAB 4: TRẠM SỬA SAI (MISTAKE CRUSHER)
+
+             ========================================== -->
+
+        <section id="tab-mistakes" class="hidden space-y-6 animate-fade-in">
+
+            <div class="glass-card p-5 sm:p-6 rounded-2xl border border-rose-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+
+                <div class="space-y-1">
+
+                    <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20">
+
+                        <i class="ph-fill ph-fire"></i> Cơ chế Chống Học Vẹt Ngữ Cảnh
+
+                    </div>
+
+                    <h2 class="text-lg sm:text-xl font-bold text-white">Trạm Nghiền Nát Câu Sai (Mistake Crusher)</h2>
+
+                    <p class="text-xs sm:text-sm text-slate-400 max-w-2xl">
+
+                        Mọi câu bạn trả lời sai đều bị giam tại đây. Phải trả lời đúng <strong>2 lần liên tiếp</strong> mới được xóa. Bạn có thể bấm vào bất kỳ từ nào trong câu sai để tra cứu nhanh.
+
+                    </p>
+
+                </div>
+
+                <button type="button" onclick="startMistakePracticeMode()" class="px-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm flex items-center gap-2 shadow-lg transition shrink-0">
+
+                    <i class="ph-fill ph-sword text-lg"></i>
+
+                    <span>Luyện toàn bộ câu sai ngay</span>
+
+                </button>
+
+            </div>
+
+
+            <div id="mistakes-list" class="space-y-4 selectable-text"></div>
+
+        </section>
+
+
+    </main>
+
+
+    <!-- MODAL 1: CHI TIẾT TỪ VỰNG -->
+
+    <div id="word-detail-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+
+        <div class="glass-card w-full max-w-2xl rounded-3xl border border-slate-700/80 p-6 max-h-[90vh] overflow-y-auto space-y-5 animate-slide-up selectable-text">
+
+            <div id="word-detail-content"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- MODAL 2: TRA CỨU & TẠO THẺ TỪ TRỰC TIẾP TẠI CHỖ -->
+
+    <div id="instant-lookup-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+
+        <div class="glass-card w-full max-w-2xl rounded-3xl border border-amber-500/40 p-5 sm:p-6 max-h-[92vh] overflow-y-auto space-y-4 animate-slide-up">
+
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+
+                <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-xs font-bold flex items-center gap-1">
+
+                    <i class="ph-fill ph-sparkle"></i> Tra cứu & Tạo Thẻ Từ Trực Tiếp Tại Chỗ
+
+                </span>
+
+                <button type="button" onclick="closeInstantLookupModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center">
+
+                    <i class="ph ph-x text-lg"></i>
+
+                </button>
+
+            </div>
+
+            <div id="instant-lookup-body" class="space-y-4"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- MODAL 3: TRUNG TÂM QUẢN LÝ CHỦ ĐỀ & CỐ VẤN AI -->
+
+    <div id="topic-manager-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+
+        <div class="glass-card w-full max-w-3xl rounded-3xl border border-emerald-500/30 p-5 sm:p-6 max-h-[90vh] overflow-y-auto space-y-5 animate-slide-up">
+
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+
+                <div>
+
+                    <h3 class="font-bold text-base sm:text-lg text-white flex items-center gap-2">
+
+                        <i class="ph-fill ph-folders text-emerald-400 text-xl"></i>
+
+                        <span>Trung tâm Quản lý Chủ đề, Định nghĩa & Cố vấn AI</span>
+
+                    </h3>
+
+                    <p class="text-xs text-slate-400 mt-0.5">Tạo chủ đề mới, chỉnh sửa tên & định nghĩa, di chuyển từ giữa các chủ đề, xóa chủ đề hoặc nhờ AI gợi ý.</p>
+
+                </div>
+
+                <button type="button" onclick="closeTopicManagerModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center">
+
+                    <i class="ph ph-x"></i>
+
+                </button>
+
+            </div>
+
+
+            <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+
+                <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-300">➕ Tạo Chủ đề mới & Định nghĩa nội dung</h4>
+
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+
+                    <input type="text" id="new-topic-name" placeholder="Tên chủ đề (VD: Y khoa - Tim mạch)" class="sm:col-span-4 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white">
+
+                    <input type="text" id="new-topic-desc" placeholder="Định nghĩa / Mô tả chủ đề này..." class="sm:col-span-6 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-slate-200">
+
+                    <button type="button" onclick="createNewTopic()" class="sm:col-span-2 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs">Thêm mới</button>
+
+                </div>
+
+            </div>
+
+
+            <div class="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/30 space-y-2.5">
+
+                <div class="flex flex-wrap items-center justify-between gap-2">
+
+                    <span class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+
+                        <i class="ph-fill ph-robot text-base"></i> AI Cố vấn Kho từ & Gợi ý Chủ đề
+
+                    </span>
+
+                    <button type="button" onclick="getAITopicAdvisor()" id="btn-ai-advisor" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1">
+
+                        <i class="ph-fill ph-sparkle"></i> Nhờ AI Phân tích & Gợi ý việc nên làm
+
+                    </button>
+
+                </div>
+
+                <div id="ai-advisor-output" class="text-xs text-slate-300 leading-relaxed">
+
+                    Bấm nút bên trên để AI rà soát các chủ đề hiện tại và gợi ý từ vựng cốt lõi nên bổ sung.
+
+                </div>
+
+            </div>
+
+
+            <div class="space-y-2.5" id="topic-manager-list"></div>
+
+
+            <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2.5">
+
+                <h4 class="text-xs font-bold uppercase tracking-wider text-amber-300">⇄ Di chuyển Từ vựng qua lại giữa các Chủ đề</h4>
+
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center text-xs">
+
+                    <select id="move-word-select" class="sm:col-span-5 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"></select>
+
+                    <span class="sm:col-span-1 text-center text-slate-400">➔</span>
+
+                    <select id="move-target-topic" class="sm:col-span-4 px-3 py-2 bg-slate-900 border border-emerald-500/40 rounded-xl text-emerald-300"></select>
+
+                    <button type="button" onclick="moveWordToTopic()" class="sm:col-span-2 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold">Chuyển</button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- MODAL 4: CÀI ĐẶT & SAO LƯU -->
+
+    <div id="settings-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+
+        <div class="glass-card w-full max-w-lg rounded-3xl border border-slate-700/80 p-6 space-y-6 animate-slide-up">
+
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+
+                <h3 class="font-bold text-base text-white flex items-center gap-2">
+
+                    <i class="ph-fill ph-gear-six text-indigo-400 text-xl"></i>
+
+                    <span>Cấu hình AI & Quản lý Dữ liệu</span>
+
+                </h3>
+
+                <button type="button" onclick="closeSettingsModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white">
+
+                    <i class="ph ph-x"></i>
+
+                </button>
+
+            </div>
+
+
+            <div class="space-y-2">
+
+                <label class="block text-xs font-semibold text-indigo-300 uppercase tracking-wider">Gemini API Key (Tùy chọn)</label>
+
+                <div class="flex gap-2 pt-1">
+
+                    <input type="password" id="settings-api-key" placeholder="AIzaSy..." class="flex-1 px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white font-mono focus:border-indigo-500 focus:outline-none">
+
+                    <button type="button" onclick="saveApiKey()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition">Lưu Key</button>
+
+                </div>
+
+            </div>
+
+
+            <div class="space-y-3 pt-2 border-t border-slate-800">
+
+                <label class="block text-xs font-semibold text-emerald-300 uppercase tracking-wider">Sao lưu & Khôi phục Kho từ vựng (JSON)</label>
+
+                <div class="flex flex-wrap gap-2.5">
+
+                    <button type="button" onclick="exportDataJSON()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-2 border border-slate-700 transition">
+
+                        <i class="ph ph-download-simple text-base text-emerald-400"></i> Xuất dữ liệu (Backup)
+
+                    </button>
+
+                    <label class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-2 border border-slate-700 cursor-pointer transition">
+
+                        <i class="ph ph-upload-simple text-base text-indigo-400"></i> Nhập dữ liệu (Restore)
+
+                        <input type="file" accept=".json" onchange="importDataJSON(event)" class="hidden">
+
+                    </label>
+
+                    <button type="button" onclick="resetToDefaultData()" class="px-4 py-2.5 rounded-xl bg-rose-950/50 hover:bg-rose-900/60 text-rose-300 text-xs font-medium flex items-center gap-2 border border-rose-800/50 transition ml-auto">
+
+                        <i class="ph ph-trash text-base"></i> Khôi phục gốc
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- TOAST NOTIFICATION -->
+
+    <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+
+    <script>
+
+        const DEFAULT_TOPICS = [
+
+            { name: 'Y khoa - Lâm sàng', desc: 'Thuật ngữ bệnh học, triệu chứng, chẩn đoán và điều trị lâm sàng.' },
+
+            { name: 'Học thuật & Công nghệ', desc: 'Từ vựng C1-C2 trong báo cáo khoa học, bài đọc IELTS và công nghệ.' },
+
+            { name: 'Cụm Động Từ & Giao Tiếp', desc: 'Phrasal Verbs, Idioms, giới từ đi kèm và cấu trúc phản xạ đời sống.' }
+
+        ];
+
+
+        const DEFAULT_WORDS = [
+
+            {
+
+                id: 'w_med_1',
+
+                word: 'appendicitis',
+
+                pos: 'noun',
+
+                ipa: '/əˌpendɪˈsaɪtɪs/',
+
+                cefr: 'B2',
+
+                topic: 'Y khoa - Lâm sàng',
+
+                sentenceDifficulty: 'Trung bình (B1-B2)',
+
+                medAnatomy: { prefix: 'Không có', root: 'appendic (ruột thừa)', combining: '-o-', suffix: '-itis (viêm)' },
+
+                meaning: 'Viêm ruột thừa',
+
+                example: 'Acute appendicitis typically presents with periumbilical pain that migrates to the right lower quadrant.',
+
+                exampleTrans: 'Viêm ruột thừa cấp tính thường biểu hiện bằng cơn đau quanh rốn sau đó khu trú xuống hố chậu phải.',
+
+                collocations: ['acute appendicitis', 'ruptured appendicitis', 'undergo appendectomy'],
+
+                explanation: 'Thuật ngữ Y khoa kinh điển ghép từ gốc "appendic" (ruột thừa) + hậu tố "-itis" (chỉ tình trạng viêm).',
+
+                personalNote: 'appendic + -itis = Viêm ruột thừa. Đau điểm McBurney ở hố chậu phải.',
+
+                mastery: 40,
+
+                quizPool: [{ sentence: 'The emergency physician suspected acute ___ when the patient reported severe pain in the right lower abdomen.', trans: 'Bác sĩ cấp cứu nghi ngờ viêm ruột thừa cấp tính.', hint: 'Viêm ruột thừa' }]
+
+            },
+
+            {
+
+                id: 'w1',
+
+                word: 'ubiquitous',
+
+                pos: 'adj',
+
+                ipa: '/juːˈbɪkwɪtəs/',
+
+                cefr: 'C1',
+
+                topic: 'Học thuật & Công nghệ',
+
+                sentenceDifficulty: 'Khó / Học thuật (C1-C2)',
+
+                medAnatomy: { prefix: '', root: '', combining: '', suffix: '' },
+
+                meaning: 'Có mặt ở khắp mọi nơi, phổ biến đại trà',
+
+                example: 'Smartphones have become ubiquitous in modern daily life, transforming how we communicate.',
+
+                exampleTrans: 'Điện thoại thông minh đã trở nên phổ biến khắp mọi nơi trong đời sống hiện đại.',
+
+                collocations: ['become ubiquitous', 'ubiquitous presence'],
+
+                explanation: 'Dùng trong văn viết hoặc giao tiếp trang trọng thay cho "everywhere".',
+
+                personalNote: 'Nhớ âm đầu /juː/.',
+
+                mastery: 25,
+
+                quizPool: [{ sentence: 'Coffee shops have become so ___ in the city center that you can find one on almost every street corner.', trans: 'Các quán cà phê phổ biến khắp nơi.', hint: 'Có mặt ở khắp mọi nơi' }]
+
+            }
+
+        ];
+
+
+        const STORAGE_KEYS = { MASTER: 'lexicontext_master_db_unified', WORDS: 'lexicontext_words_v1', MISTAKES: 'lexicontext_mistakes_v1', TOPICS: 'lexicontext_topics_v1', API_KEY: 'lexicontext_gemini_key_v1' };
+
+        let words = [], mistakes = [], topics = [];
+
+        let currentTab = 'vault', currentFilter = 'all', currentTopicFilter = 'ALL', currentCefrFilter = 'ALL';
+
+        let currentQuiz = null, quizInputMode = 'mcq', quizStreak = 0, extractedCandidatesCache = [], revealedMistakeIds = new Set();
+
+        let globalSynth = null, currentSelectedPhrase = '', currentSelectedContext = '', instantLookupDraft = null, activeSpeechRec = null;
+
+        const apiKey = "";
+
+
+        async function callGeminiCanvasAPI(promptText, responseSchema = null) {
+
+            const customKey = localStorage.getItem(STORAGE_KEYS.API_KEY) || "";
+
+            const activeKey = customKey.trim() !== "" ? customKey.trim() : apiKey;
+
+            const endpoints = [
+
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeKey}`,
+
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${activeKey}`
+
+            ];
+
+            const payload = { contents: [{ parts: [{ text: promptText }] }] };
+
+            if (responseSchema) payload.generationConfig = { responseMimeType: "application/json", responseSchema };
+
+
+            for (const apiUrl of endpoints) {
+
+                try {
+
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+
+                    if (response.ok) {
+
+                        const result = await response.json();
+
+                        const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                        if (text) return text;
+
+                    }
+
+                } catch (err) {}
+
+            }
+
+            throw new Error("Không thể kết nối Gemini API.");
+
+        }
+
+
+        function normalizeWordObject(w) {
+
+            const isMed = (w.topic || '').toLowerCase().includes('y khoa') || Boolean(w.medAnatomy?.root);
+
+            return {
+
+                id: w.id || ('w_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
+
+                word: w.word || '',
+
+                pos: w.pos || 'word',
+
+                ipa: w.ipa || `/${w.word || ''}/`,
+
+                cefr: ['A1','A2','B1','B2','C1','C2'].includes(w.cefr) ? w.cefr : 'B2',
+
+                topic: (w.topic || (isMed ? 'Y khoa - Lâm sàng' : 'Học thuật & Công nghệ')).trim(),
+
+                sentenceDifficulty: w.sentenceDifficulty || 'Trung bình (B1-B2)',
+
+                medAnatomy: { prefix: w.medAnatomy?.prefix||'', root: w.medAnatomy?.root||'', combining: w.medAnatomy?.combining||'', suffix: w.medAnatomy?.suffix||'' },
+
+                meaning: w.meaning || '',
+
+                example: w.example || '',
+
+                exampleTrans: w.exampleTrans || '',
+
+                collocations: Array.isArray(w.collocations) ? w.collocations : [],
+
+                explanation: w.explanation || '',
+
+                personalNote: w.personalNote || '',
+
+                mastery: typeof w.mastery === 'number' ? w.mastery : 25,
+
+                lastPronunciation: w.lastPronunciation || null,
+
+                quizPool: Array.isArray(w.quizPool) && w.quizPool.length > 0 ? w.quizPool : [{ sentence: (w.example||'').replace(new RegExp((w.word||'').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '___'), trans: w.exampleTrans||'', hint: w.meaning||'' }]
+
+            };
+
+        }
+
+
+        function loadState() {
+
+            try {
+
+                let loadedWords = null, loadedMistakes = null, loadedTopics = null;
+
+                const rawV1 = localStorage.getItem(STORAGE_KEYS.WORDS);
+
+                const rawMaster = localStorage.getItem(STORAGE_KEYS.MASTER);
+
+                if (rawV1) { const p = JSON.parse(rawV1); if (Array.isArray(p)) loadedWords = p; }
+
+                if (rawMaster) {
+
+                    const p = JSON.parse(rawMaster);
+
+                    if (p && Array.isArray(p.words)) { loadedWords = p.words; loadedMistakes = p.mistakes; loadedTopics = p.topics; }
+
+                }
+
+                words = (loadedWords && loadedWords.length > 0) ? loadedWords.map(normalizeWordObject) : DEFAULT_WORDS.map(normalizeWordObject);
+
+                mistakes = Array.isArray(loadedMistakes) ? loadedMistakes : [];
+
+                topics = (Array.isArray(loadedTopics) && loadedTopics.length > 0) ? loadedTopics : JSON.parse(JSON.stringify(DEFAULT_TOPICS));
+
+                syncTopicsWithWords();
+
+            } catch (e) {
+
+                words = DEFAULT_WORDS.map(normalizeWordObject); mistakes = []; topics = JSON.parse(JSON.stringify(DEFAULT_TOPICS));
+
+            }
+
+            saveState();
+
+        }
+
+
+        function syncTopicsWithWords() {
+
+            const existing = new Set(topics.map(t => t.name.toLowerCase()));
+
+            words.forEach(w => {
+
+                const name = (w.topic || 'Chưa phân loại').trim();
+
+                w.topic = name;
+
+                if (!existing.has(name.toLowerCase())) {
+
+                    topics.push({ name, desc: `Chủ đề từ vựng ${name}.` });
+
+                    existing.add(name.toLowerCase());
+
+                }
+
+            });
+
+        }
+
+
+        function saveState() {
+
+            try {
+
+                syncTopicsWithWords();
+
+                localStorage.setItem(STORAGE_KEYS.WORDS, JSON.stringify(words));
+
+                localStorage.setItem(STORAGE_KEYS.MISTAKES, JSON.stringify(mistakes));
+
+                localStorage.setItem(STORAGE_KEYS.TOPICS, JSON.stringify(topics));
+
+                localStorage.setItem(STORAGE_KEYS.MASTER, JSON.stringify({ words, mistakes, topics, updatedAt: Date.now() }));
+
+                updateBadgesAndStats();
+
+                renderTopicSelectors();
+
+            } catch (e) {}
+
+        }
+
+
+        function speakText(text, rate = 0.92) {
+
+            if (!('speechSynthesis' in window) || !text) return;
+
+            window.speechSynthesis.cancel();
+
+            const u = new SpeechSynthesisUtterance(text);
+
+            u.lang = 'en-US'; u.rate = rate;
+
+            window.speechSynthesis.speak(u);
+
+        }
+
+
+        function playSoundEffect(type) {
+
+            try {
+
+                if (typeof Tone === 'undefined') return;
+
+                if (Tone.context && Tone.context.state !== 'running') Tone.context.resume().catch(()=>{});
+
+                if (!globalSynth) { globalSynth = new Tone.Synth().toDestination(); globalSynth.volume.value = -10; }
+
+                const now = Tone.now();
+
+                if (type === 'correct') { globalSynth.triggerAttackRelease('C5', '16n', now); globalSynth.triggerAttackRelease('G5', '8n', now + 0.12); }
+
+                else { globalSynth.triggerAttackRelease('E3', '8n', now); globalSynth.triggerAttackRelease('C3', '4n', now + 0.12); }
+
+            } catch (e) {}
+
+        }
+
+
+        function switchTab(tabId) {
+
+            currentTab = tabId;
+
+            ['vault', 'add', 'quiz', 'mistakes'].forEach(t => {
+
+                const sec = document.getElementById(`tab-${t}`);
+
+                const nav = document.getElementById(`nav-${t}`);
+
+                if (!sec || !nav) return;
+
+                if (t === tabId) {
+
+                    sec.classList.remove('hidden');
+
+                    nav.className = 'shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 text-white shadow transition-all';
+
+                } else {
+
+                    sec.classList.add('hidden');
+
+                    nav.className = 'shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-400 hover:text-white bg-slate-900/70 border border-slate-800/80 transition-all';
+
+                }
+
+            });
+
+            if (tabId === 'vault') renderVault();
+
+            if (tabId === 'quiz' && !currentQuiz) generateQuizQuestion();
+
+            if (tabId === 'mistakes') renderMistakes();
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        }
+
+
+        function updateBadgesAndStats() {
+
+            document.getElementById('stat-total').textContent = words.length;
+
+            document.getElementById('stat-mastered').textContent = words.filter(w => w.mastery >= 80).length;
+
+            document.getElementById('stat-learning').textContent = words.filter(w => w.mastery >= 40 && w.mastery < 80).length;
+
+            document.getElementById('stat-weak').textContent = words.filter(w => w.mastery < 40).length;
+
+            document.getElementById('badge-vault').textContent = words.length;
+
+            document.getElementById('badge-mistakes').textContent = mistakes.length;
+
+        }
+
+
+        function getCefrBadgeClass(level) {
+
+            const map = {
+
+                'A1': 'bg-slate-800 text-slate-200 border-slate-700',
+
+                'A2': 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+
+                'B1': 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+
+                'B2': 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
+
+                'C1': 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+
+                'C2': 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+
+            };
+
+            return map[level] || map['B2'];
+
+        }
+
+
+        // ==========================================
+
+        // QUẢN LÝ CHỦ ĐỀ
+
+        // ==========================================
+
+        function getTopicWordCounts() {
+
+            const c = {}; topics.forEach(t => { c[t.name] = 0; });
+
+            words.forEach(w => { const n = w.topic || 'Chưa phân loại'; c[n] = (c[n] || 0) + 1; });
+
+            return c;
+
+        }
+
+
+        function renderTopicSelectors() {
+
+            const counts = getTopicWordCounts();
+
+            const pillsBar = document.getElementById('topic-pills-bar');
+
+            if (pillsBar) {
+
+                let html = `<button type="button" onclick="setTopicVaultFilter('ALL')" class="shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${currentTopicFilter === 'ALL' ? 'bg-emerald-600 text-white shadow' : 'bg-slate-950 text-slate-300 border border-slate-800'}"><i class="ph-fill ph-stack"></i> Tất cả chủ đề (${words.length})</button>`;
+
+                topics.forEach(t => {
+
+                    const isAct = currentTopicFilter === t.name;
+
+                    const isMed = t.name.toLowerCase().includes('y khoa');
+
+                    html += `<button type="button" onclick="setTopicVaultFilter('${escapeQuotes(t.name)}')" class="shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5 ${isAct ? 'bg-indigo-600 text-white shadow' : 'bg-slate-950 text-slate-300 border border-slate-800'}"><i class="ph-fill ${isMed ? 'ph-first-aid-kit text-rose-400' : 'ph-folder text-indigo-400'}"></i><span>${escapeHtml(t.name)}</span><span class="text-[10px] font-mono opacity-75">(${counts[t.name] || 0})</span></button>`;
+
+                });
+
+                pillsBar.innerHTML = html;
+
+            }
+
+
+            const banner = document.getElementById('active-topic-banner');
+
+            if (banner) {
+
+                if (currentTopicFilter === 'ALL') banner.classList.add('hidden');
+
+                else {
+
+                    const tObj = topics.find(t => t.name === currentTopicFilter);
+
+                    banner.classList.remove('hidden');
+
+                    document.getElementById('active-topic-name').textContent = currentTopicFilter;
+
+                    document.getElementById('active-topic-desc').textContent = tObj?.desc || '';
+
+                }
+
+            }
+
+
+            const dl = document.getElementById('topics-datalist');
+
+            if (dl) dl.innerHTML = topics.map(t => `<option value="${escapeHtml(t.name)}">`).join('');
+
+
+            const qTopic = document.getElementById('quiz-topic-filter');
+
+            if (qTopic) {
+
+                const prev = qTopic.value || 'ALL';
+
+                qTopic.innerHTML = `<option value="ALL">Tất cả chủ đề (${words.length} từ)</option>` + topics.map(t => `<option value="${escapeHtml(t.name)}">${escapeHtml(t.name)} (${counts[t.name] || 0} từ)</option>`).join('');
+
+                if ([...qTopic.options].some(o => o.value === prev)) qTopic.value = prev;
+
+            }
+
+        }
+
+
+        function setTopicVaultFilter(name) { currentTopicFilter = name; renderTopicSelectors(); renderVault(); }
+
+        function setCefrVaultFilter(lv) {
+
+            currentCefrFilter = lv;
+
+            ['ALL','A1','A2','B1','B2','C1','C2'].forEach(c => {
+
+                const b = document.getElementById(`cfilter-${c}`);
+
+                if (b) b.className = c === lv ? 'px-2.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow' : 'px-2 py-1.5 rounded-lg text-xs font-mono text-slate-400 bg-slate-950 border border-slate-800';
+
+            });
+
+            renderVault();
+
+        }
+
+        function setVaultFilter(st) { currentFilter = st; renderVault(); }
+
+
+        function openTopicManagerModal() { renderTopicManagerContent(); document.getElementById('topic-manager-modal').classList.remove('hidden'); }
+
+        function closeTopicManagerModal() { document.getElementById('topic-manager-modal').classList.add('hidden'); }
+
+
+        function renderTopicManagerContent() {
+
+            const counts = getTopicWordCounts();
+
+            const listEl = document.getElementById('topic-manager-list');
+
+            if (listEl) {
+
+                listEl.innerHTML = topics.map((t, idx) => `
+
+                    <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+
+                            <input type="text" id="edit-tname-${idx}" value="${escapeHtml(t.name)}" class="sm:col-span-4 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs font-bold text-white">
+
+                            <input type="text" id="edit-tdesc-${idx}" value="${escapeHtml(t.desc||'')}" placeholder="Định nghĩa..." class="sm:col-span-6 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-slate-200">
+
+                            <div class="sm:col-span-2 flex justify-end gap-1">
+
+                                <button type="button" onclick="saveTopicEdits(${idx})" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs">Lưu</button>
+
+                                <button type="button" onclick="deleteTopicByIndex(${idx})" class="px-2 py-1.5 rounded-xl bg-rose-950 text-rose-300 text-xs"><i class="ph ph-trash"></i></button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                `).join('');
+
+            }
+
+            document.getElementById('move-word-select').innerHTML = words.map(w => `<option value="${w.id}">${escapeHtml(w.word)} (${escapeHtml(w.topic)})</option>`).join('');
+
+            document.getElementById('move-target-topic').innerHTML = topics.map(t => `<option value="${escapeHtml(t.name)}">${escapeHtml(t.name)}</option>`).join('');
+
+        }
+
+
+        function createNewTopic() {
+
+            const name = document.getElementById('new-topic-name').value.trim();
+
+            const desc = document.getElementById('new-topic-desc').value.trim();
+
+            if (!name) { showToast('Vui lòng nhập tên chủ đề!', 'warning'); return; }
+
+            if (topics.some(t => t.name.toLowerCase() === name.toLowerCase())) { showToast('Chủ đề đã tồn tại!', 'warning'); return; }
+
+            topics.push({ name, desc: desc || `Chủ đề ${name}` });
+
+            document.getElementById('new-topic-name').value = ''; document.getElementById('new-topic-desc').value = '';
+
+            saveState(); renderTopicManagerContent(); renderVault(); showToast(`Đã tạo chủ đề "${name}"!`, 'success');
+
+        }
+
+
+        function saveTopicEdits(idx) {
+
+            const old = topics[idx]; const newName = document.getElementById(`edit-tname-${idx}`).value.trim(); const newDesc = document.getElementById(`edit-tdesc-${idx}`).value.trim();
+
+            if (!newName) return;
+
+            words.forEach(w => { if (w.topic.toLowerCase() === old.name.toLowerCase()) w.topic = newName; });
+
+            old.name = newName; old.desc = newDesc;
+
+            if (currentTopicFilter === old.name) currentTopicFilter = newName;
+
+            saveState(); renderTopicManagerContent(); renderVault(); showToast('Đã lưu chủ đề!', 'success');
+
+        }
+
+
+        function deleteTopicByIndex(idx) {
+
+            if (topics.length <= 1) { showToast('Phải giữ lại ít nhất 1 chủ đề!', 'warning'); return; }
+
+            const target = topics[idx];
+
+            const fallback = topics.find((_, i) => i !== idx).name;
+
+            words.forEach(w => { if (w.topic === target.name) w.topic = fallback; });
+
+            topics.splice(idx, 1);
+
+            if (currentTopicFilter === target.name) currentTopicFilter = 'ALL';
+
+            saveState(); renderTopicManagerContent(); renderVault(); showToast(`Đã xóa chủ đề!`, 'info');
+
+        }
+
+
+        function moveWordToTopic() {
+
+            const wId = document.getElementById('move-word-select').value;
+
+            const tName = document.getElementById('move-target-topic').value;
+
+            const w = words.find(i => i.id === wId);
+
+            if (w) { w.topic = tName; saveState(); renderTopicManagerContent(); renderVault(); showToast('Đã chuyển chủ đề từ thành công!', 'success'); }
+
+        }
+
+
+        async function getAITopicAdvisor() {
+
+            const btn = document.getElementById('btn-ai-advisor'); const out = document.getElementById('ai-advisor-output');
+
+            btn.disabled = true; btn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> AI đang phân tích...`;
+
+            try {
+
+                const prompt = `Phân tích kho từ vựng gồm ${words.length} từ thuộc ${topics.length} chủ đề và đưa ra lời khuyên học tập ngắn gọn, sắc bén bằng tiếng Việt.`;
+
+                const advice = await callGeminiCanvasAPI(prompt);
+
+                out.innerHTML = `<div class="p-3 rounded-xl bg-slate-950 border border-indigo-500/30 text-slate-200">${escapeHtml(advice)}</div>`;
+
+            } catch (e) {
+
+                out.innerHTML = `<div class="p-3 rounded-xl bg-slate-950 text-slate-200">💡 Bạn đang có ${words.length} từ. Hãy tích cực ôn tập các từ có độ thuộc thấp!</div>`;
+
+            } finally { btn.disabled = false; btn.innerHTML = `<i class="ph-fill ph-sparkle"></i> Nhờ AI Phân tích & Gợi ý`; }
+
+        }
+
+
+        function aiSuggestWordsForActiveTopic() {
+
+            if (currentTopicFilter === 'ALL') return;
+
+            switchTab('add');
+
+            document.getElementById('ai-quick-input').value = `Gợi ý 4 từ vựng đắt giá thuộc chủ đề: ${currentTopicFilter}`;
+
+            analyzeWithAI();
+
+        }
+
+
+        // ==========================================
+
+        // TÍNH NĂNG BÔI ĐEN TRA CỨU TẠI CHỖ
+
+        // ==========================================
+
+        document.addEventListener('mouseup', handleTextSelection);
+
+        document.addEventListener('touchend', () => setTimeout(handleTextSelection, 50));
+
+
+        function handleTextSelection() {
+
+            const sel = window.getSelection(); const text = sel ? sel.toString().trim() : '';
+
+            if (text.length >= 2 && text.length <= 50 && !text.includes('\n')) {
+
+                let context = '';
+
+                try {
+
+                    const range = sel.getRangeAt(0); let node = range.commonAncestorContainer;
+
+                    if (node.nodeType === 3) node = node.parentNode;
+
+                    context = node.closest('p, div, span, label')?.textContent || '';
+
+                } catch (e) {}
+
+                currentSelectedPhrase = text; currentSelectedContext = context.trim() || `Context: "${text}"`;
+
+                document.getElementById('selected-phrase-preview').textContent = text;
+
+                document.getElementById('floating-selection-bar').classList.remove('hidden');
+
+            }
+
+        }
+
+        function hideSelectionBar() { document.getElementById('floating-selection-bar').classList.add('hidden'); }
+
+        function promptManualInstantLookup() {
+
+            const v = prompt('Nhập từ hoặc thuật ngữ y khoa bạn muốn tra cứu:');
+
+            if (v && v.trim()) openInstantLookupModal(v.trim(), `Context: ${v.trim()}`);
+
+        }
+
+
+        async function openInstantLookupModal(phrase, context) {
+
+            hideSelectionBar();
+
+            const modal = document.getElementById('instant-lookup-modal'); const body = document.getElementById('instant-lookup-body');
+
+            modal.classList.remove('hidden');
+
+            body.innerHTML = `<div class="p-8 text-center text-slate-300"><i class="ph ph-spinner animate-spin text-2xl"></i><p class="mt-2">AI đang tra cứu "${escapeHtml(phrase)}"...</p></div>`;
+
+
+            try {
+
+                const schema = {
+
+                    type: "OBJECT",
+
+                    properties: {
+
+                        word: { type: "STRING" }, pos: { type: "STRING" }, ipa: { type: "STRING" },
+
+                        cefr: { type: "STRING" }, topic: { type: "STRING" }, sentenceDifficulty: { type: "STRING" },
+
+                        medPrefix: { type: "STRING" }, medRoot: { type: "STRING" }, medCombining: { type: "STRING" }, medSuffix: { type: "STRING" },
+
+                        meaning: { type: "STRING" }, example: { type: "STRING" }, exampleTrans: { type: "STRING" },
+
+                        collocations: { type: "ARRAY", items: { type: "STRING" } }, explanation: { type: "STRING" }, personalNote: { type: "STRING" }
+
+                    },
+
+                    required: ["word", "pos", "ipa", "cefr", "topic", "sentenceDifficulty", "medPrefix", "medRoot", "medCombining", "medSuffix", "meaning", "example", "exampleTrans", "collocations", "explanation", "personalNote"]
+
+                };
+
+                const res = await callGeminiCanvasAPI(`Phân tích "${phrase}" trong câu: "${context}". Trả về JSON chuẩn.`, schema);
+
+                instantLookupDraft = JSON.parse(res);
+
+                renderInstantLookupModalContent();
+
+            } catch (e) {
+
+                instantLookupDraft = {
+
+                    word: phrase, pos: 'word', ipa: `/${phrase}/`, cefr: 'B2', topic: 'Học thuật & Công nghệ', sentenceDifficulty: 'Trung bình (B1-B2)',
+
+                    medPrefix: '', medRoot: '', medCombining: '', medSuffix: '', meaning: 'Nghĩa tra cứu nhanh',
+
+                    example: context, exampleTrans: 'Bản dịch.', collocations: [phrase], explanation: 'Tra cứu nhanh.', personalNote: ''
+
+                };
+
+                renderInstantLookupModalContent();
+
+            }
+
+        }
+
+
+        function renderInstantLookupModalContent() {
+
+            const body = document.getElementById('instant-lookup-body'); const d = instantLookupDraft; if (!d) return;
+
+            body.innerHTML = `
+
+                <div class="space-y-3 text-xs sm:text-sm">
+
+                    <div class="flex justify-between items-start">
+
+                        <div>
+
+                            <h3 class="text-xl font-bold text-white">${escapeHtml(d.word)} <span class="text-indigo-300 font-mono text-xs">${escapeHtml(d.ipa)}</span></h3>
+
+                            <p class="text-emerald-300 font-semibold mt-1">${escapeHtml(d.meaning)}</p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+
+                        <p class="text-slate-200">"${escapeHtml(d.example)}"</p>
+
+                        <p class="text-emerald-300 italic text-xs">${escapeHtml(d.exampleTrans)}</p>
+
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/30">
+
+                        <strong class="text-indigo-300 block mb-1">Giải thích AI:</strong>
+
+                        <p class="text-slate-300 text-xs">${escapeHtml(d.explanation)}</p>
+
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-2">
+
+                        <button type="button" onclick="closeInstantLookupModal()" class="px-4 py-2 bg-slate-800 text-xs rounded-xl">Hủy</button>
+
+                        <button type="button" onclick="saveInstantDraftToVault()" class="px-5 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow">+ Lưu vào Kho</button>
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+
+
+        function closeInstantLookupModal() { document.getElementById('instant-lookup-modal').classList.add('hidden'); }
+
+        function saveInstantDraftToVault() {
+
+            if (!instantLookupDraft) return;
+
+            words.unshift(normalizeWordObject(instantLookupDraft));
+
+            saveState(); closeInstantLookupModal(); showToast(`Đã lưu "${instantLookupDraft.word}" thành công!`, 'success');
+
+        }
+
+
+        // ==========================================
+
+        // KHO TỪ VỰNG & TRỢ LÝ AI THÊM TỪ
+
+        // ==========================================
+
+        function toggleMedAnatomyBox() { document.getElementById('med-anatomy-fields')?.classList.toggle('hidden'); }
+
+        function checkIfMedicalTopicInput() {
+
+            const v = (document.getElementById('form-topic')?.value || '').toLowerCase();
+
+            if (v.includes('y khoa') || v.includes('med')) document.getElementById('med-anatomy-fields')?.classList.remove('hidden');
+
+        }
+
+
+        function fillQuickSample(w) { document.getElementById('ai-quick-input').value = w; analyzeWithAI(); }
+
+        function fillSampleParagraph() {
+
+            document.getElementById('ai-quick-input').value = `Acute appendicitis typically presents with right lower quadrant abdominal pain and requires immediate surgical consultation.`;
+
+            analyzeWithAI();
+
+        }
+
+        function speakInputWord() { speakText(document.getElementById('form-word').value.trim()); }
+
+
+        async function analyzeWithAI() {
+
+            const raw = document.getElementById('ai-quick-input').value.trim();
+
+            if (!raw) { showToast('Vui lòng nhập từ hoặc đoạn văn!', 'warning'); return; }
+
+            const cefr = document.getElementById('cefr-level-select').value;
+
+            const btn = document.getElementById('btn-ai-analyze'); const orig = btn.innerHTML; btn.disabled = true;
+
+            btn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> AI đang phân tích...`;
+
+
+            try {
+
+                const schema = {
+
+                    type: "OBJECT",
+
+                    properties: {
+
+                        word: { type: "STRING" }, pos: { type: "STRING" }, ipa: { type: "STRING" },
+
+                        cefr: { type: "STRING" }, topic: { type: "STRING" }, sentenceDifficulty: { type: "STRING" },
+
+                        medPrefix: { type: "STRING" }, medRoot: { type: "STRING" }, medCombining: { type: "STRING" }, medSuffix: { type: "STRING" },
+
+                        meaning: { type: "STRING" }, example: { type: "STRING" }, exampleTrans: { type: "STRING" },
+
+                        collocations: { type: "ARRAY", items: { type: "STRING" } }, explanation: { type: "STRING" }, personalNote: { type: "STRING" },
+
+                        quizSentence: { type: "STRING" }, quizTrans: { type: "STRING" }
+
+                    },
+
+                    required: ["word", "pos", "ipa", "cefr", "topic", "sentenceDifficulty", "medPrefix", "medRoot", "medCombining", "medSuffix", "meaning", "example", "exampleTrans", "collocations", "explanation", "personalNote", "quizSentence", "quizTrans"]
+
+                };
+
+                const res = await callGeminiCanvasAPI(`Phân tích "${raw}" ở mức ${cefr}. Trả về JSON chuẩn đầy đủ.`, schema);
+
+                const parsed = JSON.parse(res);
+
+                populateWordForm(parsed);
+
+                showToast(`Đã phân tích xong "${parsed.word}"!`, 'success');
+
+            } catch (e) {
+
+                populateWordForm({
+
+                    word: raw, pos: 'word', ipa: `/${raw}/`, cefr: 'B2', topic: 'Học thuật & Công nghệ', sentenceDifficulty: 'Trung bình (B1-B2)',
+
+                    medPrefix: '', medRoot: '', medCombining: '', medSuffix: '', meaning: 'Nghĩa',
+
+                    example: `Example sentence using ${raw}.`, exampleTrans: 'Dịch câu.', collocations: [raw], explanation: 'Giải thích.', personalNote: '',
+
+                    quizSentence: `Complete the sentence with ${raw}: ___`, quizTrans: 'Dịch câu hỏi.'
+
+                });
+
+                showToast('Đã nạp biểu mẫu cơ bản.', 'info');
+
+            } finally { btn.disabled = false; btn.innerHTML = orig; }
+
+        }
+
+
+        function populateWordForm(d) {
+
+            document.getElementById('form-word').value = d.word || '';
+
+            document.getElementById('form-pos').value = d.pos || '';
+
+            document.getElementById('form-ipa').value = d.ipa || '';
+
+            document.getElementById('form-cefr').value = d.cefr || 'B2';
+
+            document.getElementById('form-topic').value = d.topic || 'Học thuật & Công nghệ';
+
+            document.getElementById('form-sentence-difficulty').value = d.sentenceDifficulty || 'Trung bình (B1-B2)';
+
+            document.getElementById('form-med-prefix').value = d.medPrefix || '';
+
+            document.getElementById('form-med-root').value = d.medRoot || '';
+
+            document.getElementById('form-med-combining').value = d.medCombining || '';
+
+            document.getElementById('form-med-suffix').value = d.medSuffix || '';
+
+            document.getElementById('form-meaning').value = d.meaning || '';
+
+            document.getElementById('form-example').value = d.example || '';
+
+            document.getElementById('form-example-trans').value = d.exampleTrans || '';
+
+            document.getElementById('form-collocations').value = (d.collocations || []).join(', ');
+
+            document.getElementById('form-explanation').value = d.explanation || '';
+
+            document.getElementById('form-note').value = d.personalNote || '';
+
+            document.getElementById('form-quiz-sentence').value = d.quizSentence || '';
+
+            document.getElementById('form-quiz-trans').value = d.quizTrans || '';
+
+        }
+
+
+        function resetWordForm() { document.getElementById('word-form').reset(); document.getElementById('form-id').value = ''; }
+
+
+        function saveWordFromForm(e) {
+
+            e.preventDefault();
+
+            const id = document.getElementById('form-id').value;
+
+            const word = document.getElementById('form-word').value.trim();
+
+            const pos = document.getElementById('form-pos').value.trim();
+
+            const ipa = document.getElementById('form-ipa').value.trim() || `/${word}/`;
+
+            const cefr = document.getElementById('form-cefr').value;
+
+            const topic = document.getElementById('form-topic').value.trim() || 'Chưa phân loại';
+
+            const sentenceDifficulty = document.getElementById('form-sentence-difficulty').value;
+
+            const medAnatomy = {
+
+                prefix: document.getElementById('form-med-prefix').value.trim(),
+
+                root: document.getElementById('form-med-root').value.trim(),
+
+                combining: document.getElementById('form-med-combining').value.trim(),
+
+                suffix: document.getElementById('form-med-suffix').value.trim()
+
+            };
+
+            const meaning = document.getElementById('form-meaning').value.trim();
+
+            const example = document.getElementById('form-example').value.trim();
+
+            const exampleTrans = document.getElementById('form-example-trans').value.trim();
+
+            const collocations = document.getElementById('form-collocations').value.split(',').map(s=>s.trim()).filter(Boolean);
+
+            const explanation = document.getElementById('form-explanation').value.trim();
+
+            const personalNote = document.getElementById('form-note').value.trim();
+
+            const qSent = document.getElementById('form-quiz-sentence').value.trim() || example.replace(new RegExp(word, 'gi'), '___');
+
+            const qTrans = document.getElementById('form-quiz-trans').value.trim() || exampleTrans;
+
+
+            const obj = normalizeWordObject({
+
+                id: id || ('w_' + Date.now()), word, pos, ipa, cefr, topic, sentenceDifficulty, medAnatomy,
+
+                meaning, example, exampleTrans, collocations, explanation, personalNote,
+
+                quizPool: [{ sentence: qSent, trans: qTrans, hint: meaning }]
+
+            });
+
+
+            if (id) {
+
+                const idx = words.findIndex(i => i.id === id);
+
+                if (idx !== -1) { obj.mastery = words[idx].mastery; words[idx] = obj; }
+
+                showToast('Đã cập nhật từ vựng!', 'success');
+
+            } else {
+
+                words.unshift(obj);
+
+                showToast('Đã lưu từ vựng mới vào kho!', 'success');
+
+            }
+
+            saveState(); resetWordForm(); switchTab('vault');
+
+        }
+
+
+        function editWord(id) {
+
+            const w = words.find(i => i.id === id); if (!w) return;
+
+            switchTab('add');
+
+            document.getElementById('form-id').value = w.id;
+
+            populateWordForm({ ...w, quizSentence: w.quizPool?.[0]?.sentence || '', quizTrans: w.quizPool?.[0]?.trans || '' });
+
+        }
+
+
+        function deleteWord(id) {
+
+            words = words.filter(i => i.id !== id); mistakes = mistakes.filter(m => m.wordId !== id);
+
+            saveState(); renderVault(); showToast('Đã xóa từ.', 'info');
+
+        }
+
+
+        function renderVault() {
+
+            const q = (document.getElementById('vault-search')?.value || '').trim().toLowerCase();
+
+            const grid = document.getElementById('vault-grid');
+
+            const filtered = words.filter(w => {
+
+                if (currentTopicFilter !== 'ALL' && w.topic !== currentTopicFilter) return false;
+
+                if (currentCefrFilter !== 'ALL' && w.cefr !== currentCefrFilter) return false;
+
+                if (currentFilter === 'mastered' && w.mastery < 80) return false;
+
+                if (currentFilter === 'learning' && (w.mastery < 40 || w.mastery >= 80)) return false;
+
+                if (currentFilter === 'weak' && w.mastery >= 40) return false;
+
+                if (!q) return true;
+
+                return w.word.toLowerCase().includes(q) || w.meaning.toLowerCase().includes(q) || (w.topic||'').toLowerCase().includes(q);
+
+            });
+
+
+            if (filtered.length === 0) {
+
+                grid.innerHTML = `<div class="col-span-full glass-card p-10 rounded-3xl text-center space-y-2"><p class="text-sm text-slate-400">Không tìm thấy từ vựng nào.</p><button type="button" onclick="switchTab('add')" class="px-4 py-2 bg-indigo-600 text-white text-xs rounded-xl">+ Thêm từ mới</button></div>`;
+
+                return;
+
+            }
+
+
+            grid.innerHTML = filtered.map(w => {
+
+                const m = getMasteryInfo(w.mastery);
+
+                const showMed = hasMedicalAnatomy(w);
+
+                return `
+
+                    <div class="glass-card p-4 sm:p-5 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition flex flex-col justify-between gap-3 selectable-text">
+
+                        <div class="space-y-2.5">
+
+                            <div class="flex items-start justify-between gap-2">
+
+                                <div>
+
+                                    <div class="flex items-center gap-2 flex-wrap">
+
+                                        <h3 onclick="openWordDetail('${w.id}')" class="text-base font-bold text-white hover:text-indigo-300 cursor-pointer">${escapeHtml(w.word)}</h3>
+
+                                        <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${getCefrBadgeClass(w.cefr)}">${w.cefr}</span>
+
+                                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">${escapeHtml(w.pos)}</span>
+
+                                    </div>
+
+                                    <div class="flex items-center gap-2 mt-1 flex-wrap">
+
+                                        <span class="text-xs font-mono text-indigo-300">${escapeHtml(w.ipa)}</span>
+
+                                        <button type="button" onclick="speakText('${escapeQuotes(w.word)}')" class="w-6 h-6 rounded bg-indigo-500/20 text-indigo-300 flex items-center justify-center text-xs">🔊</button>
+
+                                        <span onclick="setTopicVaultFilter('${escapeQuotes(w.topic)}')" class="text-[11px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 cursor-pointer">📁 ${escapeHtml(w.topic)}</span>
+
+                                    </div>
+
+                                </div>
+
+                                <span class="text-[10px] font-medium px-2 py-0.5 rounded-full border ${m.badgeClass}">${m.label} • ${w.mastery}%</span>
+
+                            </div>
+
+
+                            <p class="text-sm font-semibold text-slate-100">${escapeHtml(w.meaning)}</p>
+
+
+                            ${showMed ? `
+
+                                <div class="p-2.5 rounded-xl bg-rose-950/30 border border-rose-500/30 text-[11px] font-mono text-rose-200">
+
+                                    🏥 Y khoa: ${escapeHtml(w.medAnatomy.prefix||'—')} | ${escapeHtml(w.medAnatomy.root||'—')} | ${escapeHtml(w.medAnatomy.combining||'-o-')} | ${escapeHtml(w.medAnatomy.suffix||'—')}
+
+                                </div>
+
+                            ` : ''}
+
+
+                            <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+
+                                <p class="text-xs text-slate-200">"${highlightTargetWord(escapeHtml(w.example), w.word)}"</p>
+
+                                ${w.exampleTrans ? `<p class="text-[11px] text-emerald-300/80 italic">${escapeHtml(w.exampleTrans)}</p>` : ''}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="pt-2 border-t border-slate-800 space-y-2">
+
+                            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden"><div class="h-full ${m.barClass}" style="width:${w.mastery}%"></div></div>
+
+                            <div class="flex items-center justify-between text-xs">
+
+                                <button type="button" onclick="openWordDetail('${w.id}')" class="text-indigo-400">Chi tiết</button>
+
+                                <div class="flex gap-1">
+
+                                    <button type="button" onclick="quizSpecificWord('${w.id}')" class="px-2 py-1 bg-slate-800 text-slate-200 rounded">Test</button>
+
+                                    <button type="button" onclick="editWord('${w.id}')" class="p-1 text-slate-400 hover:text-white"><i class="ph ph-pencil-simple"></i></button>
+
+                                    <button type="button" onclick="deleteWord('${w.id}')" class="p-1 text-slate-400 hover:text-rose-400"><i class="ph ph-trash"></i></button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            }).join('');
+
+        }
+
+
+        function openWordDetail(id) {
+
+            const w = words.find(i => i.id === id); if (!w) return;
+
+            const m = getMasteryInfo(w.mastery);
+
+            const showMed = hasMedicalAnatomy(w);
+
+            document.getElementById('word-detail-content').innerHTML = `
+
+                <div class="flex justify-between items-start border-b border-slate-800 pb-3">
+
+                    <div>
+
+                        <div class="flex items-center gap-2 flex-wrap">
+
+                            <h2 class="text-xl font-bold text-white">${escapeHtml(w.word)}</h2>
+
+                            <span class="text-xs font-mono px-2 py-0.5 rounded border ${getCefrBadgeClass(w.cefr)}">${w.cefr}</span>
+
+                            <span class="text-xs font-mono text-indigo-300">${escapeHtml(w.ipa)}</span>
+
+                        </div>
+
+                        <p class="text-sm font-semibold text-emerald-300 mt-1">${escapeHtml(w.meaning)}</p>
+
+                    </div>
+
+                    <button type="button" onclick="closeWordDetail()" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400"><i class="ph ph-x"></i></button>
+
+                </div>
+
+                <div class="space-y-3 text-xs">
+
+                    ${showMed ? `<div class="p-3 rounded-xl bg-rose-950/30 border border-rose-500/30 font-mono text-rose-200">🏥 Tiền tố: ${escapeHtml(w.medAnatomy.prefix)} | Gốc: ${escapeHtml(w.medAnatomy.root)} | Nối: ${escapeHtml(w.medAnatomy.combining)} | Hậu tố: ${escapeHtml(w.medAnatomy.suffix)}</div>` : ''}
+
+                    <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+
+                        <p class="text-slate-200">"${escapeHtml(w.example)}"</p>
+
+                        <p class="text-emerald-300 italic">${escapeHtml(w.exampleTrans)}</p>
+
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/30">
+
+                        <strong class="text-indigo-300 block mb-1">Giải thích:</strong>
+
+                        <p class="text-slate-300">${escapeHtml(w.explanation)}</p>
+
+                    </div>
+
+                    <div>
+
+                        <label class="block text-amber-300 font-semibold mb-1">Ghi chú cá nhân:</label>
+
+                        <textarea id="modal-note-${w.id}" rows="2" class="w-full px-3 py-2 bg-slate-950 border border-amber-500/30 rounded-xl text-amber-100">${escapeHtml(w.personalNote)}</textarea>
+
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-2">
+
+                        <button type="button" onclick="w.personalNote=document.getElementById('modal-note-${w.id}').value;saveState();closeWordDetail();showToast('Đã lưu ghi chú!','success')" class="px-4 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl">Lưu ghi chú</button>
+
+                    </div>
+
+                </div>
+
+            `;
+
+            document.getElementById('word-detail-modal').classList.remove('hidden');
+
+        }
+
+        function closeWordDetail() { document.getElementById('word-detail-modal').classList.add('hidden'); }
+
+
+        // ==========================================
+
+        // PHÒNG QUIZ & CHẤM PHÁT ÂM
+
+        // ==========================================
+
+        function setQuizInputMode(mode) {
+
+            quizInputMode = mode;
+
+            document.getElementById('qmode-mcq').className = mode === 'mcq' ? 'px-2.5 py-1.5 rounded-lg font-semibold bg-indigo-600 text-white' : 'px-2.5 py-1.5 rounded-lg text-slate-400';
+
+            document.getElementById('qmode-typing').className = mode === 'typing' ? 'px-2.5 py-1.5 rounded-lg font-semibold bg-indigo-600 text-white' : 'px-2.5 py-1.5 rounded-lg text-slate-400';
+
+            renderQuizCard();
+
+        }
+
+
+        function generateQuizQuestion(forcedId = null, mistakeObj = null) {
+
+            if (!words.length) return;
+
+            const tFilter = document.getElementById('quiz-topic-filter')?.value || 'ALL';
+
+            const cFilter = document.getElementById('quiz-cefr-filter')?.value || 'ALL';
+
+
+            let target = forcedId ? words.find(i => i.id === forcedId) : null;
+
+            if (!target) {
+
+                let pool = words.filter(w => (tFilter === 'ALL' || w.topic === tFilter) && (cFilter === 'ALL' || w.cefr === cFilter));
+
+                if (!pool.length) pool = words;
+
+                const un = pool.filter(w => w.mastery < 80);
+
+                target = (un.length ? un : pool)[Math.floor(Math.random() * (un.length ? un : pool).length)];
+
+            }
+
+
+            const qItem = mistakeObj ? { sentence: mistakeObj.sentence, trans: mistakeObj.trans || target.exampleTrans, hint: target.meaning } : (target.quizPool[0] || { sentence: target.example.replace(new RegExp(target.word, 'gi'), '___'), trans: target.exampleTrans, hint: target.meaning });
+
+            const distractors = words.filter(w => w.id !== target.id).map(w => w.word).sort(() => 0.5 - Math.random()).slice(0, 3);
+
+            const options = [...distractors, target.word].sort(() => 0.5 - Math.random());
+
+
+            currentQuiz = { wordObj: target, sentence: qItem.sentence, trans: qItem.trans, options, answered: false, isCorrect: false, selectedAnswer: null, isMistakeReview: Boolean(mistakeObj), mistakeId: mistakeObj?.id, hintRevealed: false };
+
+            renderQuizCard();
+
+        }
+
+
+        function renderInteractiveSentence(s) {
+
+            if (!s) return '';
+
+            return s.split(/(\s+|[.,!?;:""()]+)/).map(token => {
+
+                const c = token.replace(/[^a-zA-Z]/g, '');
+
+                if (c.length >= 2) return `<span class="interactive-word" onclick="openInstantLookupModal('${escapeQuotes(c)}', '${escapeQuotes(s)}')">${escapeHtml(token)}</span>`;
+
+                return escapeHtml(token);
+
+            }).join('');
+
+        }
+
+
+        function renderQuizCard() {
+
+            const container = document.getElementById('quiz-container'); if (!currentQuiz) return;
+
+            const w = currentQuiz.wordObj; const m = getMasteryInfo(w.mastery);
+
+            const formatted = currentQuiz.answered ? currentQuiz.sentence.replace(/___+/g, `<span class="px-2 py-0.5 rounded font-bold ${currentQuiz.isCorrect ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">${escapeHtml(w.word)}</span>`) : currentQuiz.sentence;
+
+
+            container.innerHTML = `
+
+                <div class="flex justify-between text-xs text-slate-400">
+
+                    <span class="text-indigo-300">✨ Chạm vào bất kỳ từ nào để tra cứu nhanh</span>
+
+                    <span class="px-2.5 py-0.5 rounded-full border ${m.badgeClass}">Độ thuộc: ${w.mastery}%</span>
+
+                </div>
+
+                <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+
+                    <p class="text-base sm:text-lg font-medium text-white">"${renderInteractiveSentence(formatted)}"</p>
+
+                    ${currentQuiz.answered && currentQuiz.trans ? `<p class="text-xs text-emerald-300 italic">🇻🇳 Dịch: "${escapeHtml(currentQuiz.trans)}"</p>` : ''}
+
+                    <div>${currentQuiz.hintRevealed || currentQuiz.answered ? `<span class="text-xs text-amber-300">💡 Nghĩa: ${escapeHtml(w.meaning)}</span>` : `<button type="button" onclick="currentQuiz.hintRevealed=true;renderQuizCard()" class="text-xs text-amber-300 underline">💡 Xem gợi ý</button>`}</div>
+
+                </div>
+
+                ${quizInputMode === 'typing' ? `
+
+                    <form onsubmit="event.preventDefault();submitQuizAnswer(document.getElementById('t-in').value)" class="flex gap-2">
+
+                        <input type="text" id="t-in" ${currentQuiz.answered?'disabled':''} placeholder="Gõ từ..." class="flex-1 px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white">
+
+                        ${!currentQuiz.answered ? `<button type="submit" class="px-5 py-3 bg-indigo-600 text-white text-xs font-semibold rounded-xl">Kiểm tra</button>` : ''}
+
+                    </form>
+
+                ` : `
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+
+                        ${currentQuiz.options.map(opt => `
+
+                            <button type="button" ${currentQuiz.answered?'disabled':''} onclick="submitQuizAnswer('${escapeQuotes(opt)}')" class="p-3.5 rounded-xl border bg-slate-900 hover:bg-slate-800 border-slate-700 text-left text-sm font-medium text-white">${escapeHtml(opt)}</button>
+
+                        `).join('')}
+
+                    </div>
+
+                `}
+
+                ${currentQuiz.answered ? `
+
+                    <div class="pt-4 border-t border-slate-800 space-y-4 animate-slide-up">
+
+                        <div class="p-4 rounded-2xl ${currentQuiz.isCorrect ? 'bg-emerald-950/40 border border-emerald-500/30' : 'bg-rose-950/40 border border-rose-500/30'} flex justify-between items-center">
+
+                            <div>
+
+                                <h4 class="font-bold text-sm ${currentQuiz.isCorrect ? 'text-emerald-300' : 'text-rose-300'}">${currentQuiz.isCorrect ? 'Chính xác! (+20%)' : 'Chưa đúng! (-20%)'}</h4>
+
+                                <p class="text-xs text-white mt-1">${escapeHtml(w.word)} (${escapeHtml(w.ipa)}) <button type="button" onclick="speakText('${escapeQuotes(w.word)}')" class="text-indigo-300 underline ml-1">🔊 Nghe</button></p>
+
+                            </div>
+
+                            <button type="button" onclick="nextQuizQuestion()" class="px-4 py-2 bg-indigo-600 text-white text-xs rounded-xl font-semibold">Tiếp theo →</button>
+
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-slate-950 border border-indigo-500/30 space-y-2">
+
+                            <div class="flex justify-between items-center">
+
+                                <span class="text-xs font-bold text-indigo-300 flex items-center gap-1"><i class="ph-fill ph-microphone text-rose-400"></i> Luyện đọc & Chấm điểm CEFR</span>
+
+                                <button type="button" onclick="recordAndEvaluatePronunciation('${w.id}')" id="btn-quiz-mic" class="px-3 py-1 bg-rose-600 text-white text-xs font-bold rounded-lg shadow"><i class="ph-fill ph-microphone"></i> Bấm đọc</button>
+
+                            </div>
+
+                            <div id="pronunciation-result-box" class="text-xs text-slate-300 hidden"></div>
+
+                        </div>
+
+                    </div>
+
+                ` : ''}
+
+            `;
+
+        }
+
+
+        function submitQuizAnswer(sel) {
+
+            if (!currentQuiz || currentQuiz.answered) return;
+
+            const w = currentQuiz.wordObj;
+
+            const ok = sel.trim().toLowerCase() === w.word.trim().toLowerCase();
+
+            currentQuiz.answered = true; currentQuiz.isCorrect = ok; currentQuiz.selectedAnswer = sel;
+
+            if (ok) {
+
+                playSoundEffect('correct'); quizStreak++; w.mastery = Math.min(100, w.mastery + 20);
+
+                if (currentQuiz.isMistakeReview && currentQuiz.mistakeId) {
+
+                    const idx = mistakes.findIndex(m => m.id === currentQuiz.mistakeId);
+
+                    if (idx !== -1) { mistakes[idx].consecutiveCorrect = (mistakes[idx].consecutiveCorrect || 0) + 1; if (mistakes[idx].consecutiveCorrect >= 2) mistakes.splice(idx, 1); }
+
+                }
+
+            } else {
+
+                playSoundEffect('wrong'); quizStreak = 0; w.mastery = Math.max(0, w.mastery - 20);
+
+                if (!mistakes.some(m => m.wordId === w.id && m.sentence === currentQuiz.sentence)) {
+
+                    mistakes.unshift({ id: 'm_' + Date.now(), wordId: w.id, wordText: w.word, sentence: currentQuiz.sentence, trans: currentQuiz.trans, wrongCount: 1, consecutiveCorrect: 0, lastWrongAnswer: sel });
+
+                }
+
+            }
+
+            document.getElementById('quiz-streak').textContent = `🔥 ${quizStreak}`;
+
+            saveState(); renderQuizCard();
+
+        }
+
+        function nextQuizQuestion() { generateQuizQuestion(); }
+
+        function quizSpecificWord(id) { switchTab('quiz'); generateQuizQuestion(id); }
+
+
+        function recordAndEvaluatePronunciation(wordId) {
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            const micBtn = document.getElementById('btn-quiz-mic'); const resBox = document.getElementById('pronunciation-result-box');
+
+            const targetSentence = currentQuiz.sentence.replace(/___+/g, currentQuiz.wordObj.word);
+
+
+            if (!SpeechRecognition) {
+
+                const s = prompt(`Nhập câu bạn vừa đọc bằng tiếng Anh (Mẫu: "${targetSentence}"):`);
+
+                if (s) evaluateSpokenText(wordId, s, 5); return;
+
+            }
+
+            if (activeSpeechRec) { try { activeSpeechRec.stop(); } catch(e){} activeSpeechRec = null; }
+
+
+            const rec = new SpeechRecognition(); activeSpeechRec = rec; rec.lang = 'en-US'; rec.continuous = false; rec.interimResults = true;
+
+            let start = Date.now(); let transcript = '';
+
+            if (micBtn) { micBtn.classList.add('mic-active'); micBtn.innerHTML = `Đang nghe...`; }
+
+            if (resBox) { resBox.classList.remove('hidden'); resBox.innerHTML = `<span class="text-amber-300">🎤 Hãy đọc to câu trên...</span>`; }
+
+
+            rec.onresult = (e) => {
+
+                let interim = ''; for (let i = e.resultIndex; i < e.results.length; i++) interim += e.results[i][0].transcript;
+
+                transcript = interim; if (resBox) resBox.innerHTML = `<span>Đang nghe: <strong>"${escapeHtml(transcript)}"</strong></span>`;
+
+            };
+
+            rec.onend = () => {
+
+                if (micBtn) { micBtn.classList.remove('mic-active'); micBtn.innerHTML = `<i class="ph-fill ph-microphone"></i> Bấm đọc`; }
+
+                activeSpeechRec = null; evaluateSpokenText(wordId, transcript || targetSentence, Math.max(1.5, (Date.now()-start)/1000));
+
+            };
+
+            rec.onerror = () => {
+
+                if (micBtn) micBtn.classList.remove('mic-active'); activeSpeechRec = null;
+
+                const fb = prompt(`Nhập câu bạn vừa đọc:`, targetSentence); if (fb) evaluateSpokenText(wordId, fb, 5);
+
+            };
+
+            try { rec.start(); } catch(e) { if(micBtn) micBtn.classList.remove('mic-active'); }
+
+        }
+
+
+        function evaluateSpokenText(wordId, spokenText, durationSec) {
+
+            const w = words.find(i => i.id === wordId);
+
+            const target = currentQuiz.sentence.replace(/___+/g, w ? w.word : '').toLowerCase().replace(/[^a-z0-9\s]/g,'').split(/\s+/).filter(Boolean);
+
+            const spoken = (spokenText||'').toLowerCase().replace(/[^a-z0-9\s]/g,'').split(/\s+/).filter(Boolean);
+
+            let matched = 0; target.forEach(t => { if (spoken.includes(t)) matched++; });
+
+            const accuracy = Math.min(100, Math.round((matched / Math.max(1, target.length)) * 100));
+
+            const wpm = Math.round((spoken.length / Math.max(1, durationSec)) * 60);
+
+
+            let cefr = 'A1'; if (accuracy >= 90 && wpm >= 110) cefr = 'C2 (Chuẩn bản xứ)';
+
+            else if (accuracy >= 80) cefr = 'C1 (Cao cấp)'; else if (accuracy >= 65) cefr = 'B2 (Trung cao cấp)';
+
+            else if (accuracy >= 50) cefr = 'B1 (Trung cấp)';
+
+
+            if (w) { w.lastPronunciation = { level: cefr, accuracy, wpm }; saveState(); }
+
+            const resBox = document.getElementById('pronunciation-result-box');
+
+            if (resBox) {
+
+                resBox.classList.remove('hidden');
+
+                resBox.innerHTML = `<span>🎙️ Đọc: "${escapeHtml(spokenText)}" — Bậc: <strong>${cefr}</strong> (Khớp ${accuracy}%, ${wpm} WPM)</span>`;
+
+            }
+
+            showToast(`Đánh giá phát âm: ${cefr}`, 'success');
+
+        }
+
+
+        // ==========================================
+
+        // TRẠM SỬA SAI
+
+        // ==========================================
+
+        function renderMistakes() {
+
+            const listEl = document.getElementById('mistakes-list'); if (!listEl) return;
+
+            if (!mistakes.length) {
+
+                listEl.innerHTML = `<div class="glass-card p-12 rounded-3xl text-center text-xs text-emerald-300">Không có câu sai nào!</div>`;
+
+                return;
+
+            }
+
+            listEl.innerHTML = mistakes.map(m => {
+
+                const w = words.find(i => i.id === m.wordId) || { word: m.wordText };
+
+                const rev = revealedMistakeIds.has(m.id);
+
+                const masked = rev ? escapeHtml(m.sentence).replace(/___+/g, `<strong>${escapeHtml(w.word)}</strong>`) : escapeHtml(m.sentence);
+
+                return `
+
+                    <div class="glass-card p-4 rounded-2xl border border-rose-500/30 space-y-2 text-xs">
+
+                        <div class="flex justify-between"><span class="text-rose-300 font-bold">Sai ${m.wrongCount} lần</span><div class="flex gap-1.5"><button type="button" onclick="practiceSingleMistake('${m.id}')" class="px-2.5 py-1 bg-rose-600 text-white rounded">Làm lại</button><button type="button" onclick="if(revealedMistakeIds.has('${m.id}'))revealedMistakeIds.delete('${m.id}');else revealedMistakeIds.add('${m.id}');renderMistakes()" class="px-2 py-1 bg-slate-800 text-slate-300 rounded">${rev?'Ẩn':'Xem'}</button></div></div>
+
+                        <p class="text-white bg-slate-950 p-3 rounded-xl">"${masked}"</p>
+
+                    </div>
+
+                `;
+
+            }).join('');
+
+        }
+
+        function practiceSingleMistake(id) { const m = mistakes.find(i => i.id === id); if (m) { switchTab('quiz'); generateQuizQuestion(m.wordId, m); } }
+
+        function startMistakePracticeMode() { if (mistakes.length) practiceSingleMistake(mistakes[0].id); }
+
+
+        // ==========================================
+
+        // CÀI ĐẶT & SAO LƯU
+
+        // ==========================================
+
+        function openSettingsModal() { document.getElementById('settings-api-key').value = localStorage.getItem(STORAGE_KEYS.API_KEY) || ''; document.getElementById('settings-modal').classList.remove('hidden'); }
+
+        function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
+
+        function saveApiKey() {
+
+            const k = document.getElementById('settings-api-key').value.trim();
+
+            if (k) localStorage.setItem(STORAGE_KEYS.API_KEY, k); else localStorage.removeItem(STORAGE_KEYS.API_KEY);
+
+            closeSettingsModal(); showToast('Đã lưu API Key!', 'success');
+
+        }
+
+        function exportDataJSON() {
+
+            const blob = new Blob([JSON.stringify({ words, mistakes, topics }, null, 2)], { type: 'application/json' });
+
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `LexiContext_Backup.json`; a.click();
+
+        }
+
+        function importDataJSON(e) {
+
+            const f = e.target.files?.[0]; if (!f) return;
+
+            const r = new FileReader();
+
+            r.onload = (ev) => {
+
+                try {
+
+                    const p = JSON.parse(ev.target.result);
+
+                    if (Array.isArray(p.words)) { words = p.words.map(normalizeWordObject); mistakes = p.mistakes||[]; if(p.topics) topics=p.topics; saveState(); renderVault(); closeSettingsModal(); showToast('Khôi phục thành công!', 'success'); }
+
+                } catch(err) { showToast('File JSON không hợp lệ.', 'warning'); }
+
+            };
+
+            r.readAsText(f);
+
+        }
+
+        function resetToDefaultData() {
+
+            words = DEFAULT_WORDS.map(normalizeWordObject); mistakes = []; topics = JSON.parse(JSON.stringify(DEFAULT_TOPICS));
+
+            saveState(); renderVault(); closeSettingsModal(); showToast('Đã khôi phục dữ liệu mẫu!', 'info');
+
+        }
+
+
+        function showToast(msg) {
+
+            const c = document.getElementById('toast-container'); if (!c) return;
+
+            const t = document.createElement('div');
+
+            t.className = `px-4 py-3 rounded-2xl border shadow-xl text-xs font-semibold bg-slate-900/95 text-indigo-200 border-indigo-500/40 animate-slide-up`;
+
+            t.textContent = msg; c.appendChild(t); setTimeout(() => t.remove(), 3000);
+
+        }
+
+        function escapeHtml(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+        function escapeQuotes(s) { return String(s ?? '').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+// ===== BẢN VÁ LexiContext: dán 1 lần, ngay phía trên dòng "window.onload" =====
+
+function getMasteryInfo(m) {
+
+    if (m >= 80) return { label: 'Thuộc làu', badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30', barClass: 'bg-emerald-500' };
+
+    if (m >= 40) return { label: 'Đang ngấm', badgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/30', barClass: 'bg-amber-500' };
+
+    return { label: 'Chưa thuộc', badgeClass: 'bg-rose-500/15 text-rose-300 border-rose-500/30', barClass: 'bg-rose-500' };
+
+}
+
+
+function hasMedicalAnatomy(w) {
+
+    const a = w.medAnatomy || {};
+
+    return Boolean(a.prefix || a.root || a.combining || a.suffix);
+
+}
+
+
+function highlightTargetWord(escapedSentence, word) {
+
+    if (!word) return escapedSentence;
+
+    const safe = escapeHtml(word).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    try {
+
+        return escapedSentence.replace(new RegExp(safe, 'gi'), m => `<span class="text-amber-300 font-bold">${m}</span>`);
+
+    } catch (e) { return escapedSentence; }
+
+}
+
+
+// Sửa lỗi câu hỏi hiện chữ <span class=...> sau khi trả lời
+
+function renderInteractiveSentence(s) {
+
+    if (!s) return '';
+
+    const plain = s.replace(/<[^>]+>/g, '');
+
+    return s.split(/(<span[^>]*>.*?<\/span>)/).map(part => {
+
+        if (part.startsWith('<span')) return part;
+
+        return part.split(/(\s+|[.,!?;:"()]+)/).map(token => {
+
+            const c = token.replace(/[^a-zA-Z]/g, '');
+
+            if (c.length >= 2) return `<span class="interactive-word" onclick="openInstantLookupModal('${escapeHtml(escapeQuotes(c))}', '${escapeHtml(escapeQuotes(plain))}')">${escapeHtml(token)}</span>`;
+
+            return escapeHtml(token);
+
+        }).join('');
+
+    }).join('');
+
+}
+
+
+// Sửa nút "Lưu ghi chú" trong cửa sổ chi tiết từ
+
+function saveWordNote(id) {
+
+    const w = words.find(i => i.id === id); if (!w) return;
+
+    const el = document.getElementById('modal-note-' + id);
+
+    if (el) w.personalNote = el.value;
+
+    saveState(); closeWordDetail(); showToast('Đã lưu ghi chú!', 'success');
+
+}
+
+var _openWordDetailOriginal = openWordDetail;
+
+openWordDetail = function (id) {
+
+    _openWordDetailOriginal(id);
+
+    const btn = document.querySelector('#word-detail-content button[onclick^="w.personalNote"]');
+
+    if (btn) btn.setAttribute('onclick', `saveWordNote('${id}')`);
+
+};
+
+// ===== HẾT BẢN VÁ =====
+// ===== BẢN VÁ 2 =====
+var WORD_ITEM_SCHEMA = (function () {
+    const S = { type: "STRING" };
+    const keys = ["word","pos","ipa","cefr","topic","sentenceDifficulty","medPrefix","medRoot","medCombining","medSuffix","meaning","example","exampleTrans","explanation","personalNote","quizSentence","quizTrans"];
+    const properties = { collocations: { type: "ARRAY", items: S } };
+    keys.forEach(k => { properties[k] = S; });
+    return { type: "OBJECT", properties, required: keys.concat("collocations") };
+})();
+
+function wordPromptRules() {
+    return `Quy tắc bắt buộc: "meaning" là nghĩa TIẾNG VIỆT ngắn gọn; "explanation" giải thích sắc thái và cách dùng hoàn toàn bằng TIẾNG VIỆT; "example" là 1 câu tiếng Anh tự nhiên chứa từ; "exampleTrans" là bản dịch tiếng Việt của câu đó; "quizSentence" là câu example nhưng thay từ cần học bằng ___; "quizTrans" là bản dịch tiếng Việt của quizSentence; "cefr" chỉ là A1, A2, B1, B2, C1 hoặc C2; "ipa" dạng /.../; "topic" chọn trong danh sách chủ đề hiện có: ${topics.map(t => t.name).join(' | ')} (chỉ đặt tên chủ đề mới nếu không cái nào hợp); 4 trường medPrefix, medRoot, medCombining, medSuffix chỉ điền với thuật ngữ y khoa, còn lại để chuỗi rỗng.`;
+}
+
+function cleanDraft(d) {
+    const c = String(d.cefr || '').trim().toUpperCase().slice(0, 2);
+    const cefr = ['A1','A2','B1','B2','C1','C2'].includes(c) ? c : 'B1';
+    return { ...d, cefr, sentenceDifficulty: cefr[0] === 'A' ? 'Dễ (A1-A2)' : cefr[0] === 'B' ? 'Trung bình (B1-B2)' : 'Khó / Học thuật (C1-C2)', collocations: Array.isArray(d.collocations) ? d.collocations : [] };
+}
+
+function draftToWordObject(d) {
+    const word = String(d.word || '').trim();
+    const blank = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    const qs = /___/.test(d.quizSentence || '') ? d.quizSentence : String(d.example || '').replace(blank, '___');
+    return normalizeWordObject({
+        word, pos: d.pos, ipa: d.ipa, cefr: d.cefr, topic: d.topic, sentenceDifficulty: d.sentenceDifficulty,
+        medAnatomy: { prefix: d.medPrefix, root: d.medRoot, combining: d.medCombining, suffix: d.medSuffix },
+        meaning: d.meaning, example: d.example, exampleTrans: d.exampleTrans, collocations: d.collocations,
+        explanation: d.explanation, personalNote: d.personalNote,
+        quizPool: [{ sentence: qs, trans: d.quizTrans || d.exampleTrans || '', hint: d.meaning || '' }]
+    });
+}
+
+// --- Phân tích nhiều từ cùng lúc ---
+async function analyzeWithAI() {
+    const raw = document.getElementById('ai-quick-input').value.trim();
+    if (!raw) { showToast('Vui lòng nhập từ hoặc đoạn văn!', 'warning'); return; }
+    const cefr = document.getElementById('cefr-level-select').value;
+    const btn = document.getElementById('btn-ai-analyze'); const orig = btn.innerHTML; btn.disabled = true;
+    btn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> AI đang phân tích...`;
+    try {
+        const prompt = `Bạn là giáo viên tiếng Anh. Người dùng nhập: """${raw}"""\nNếu là danh sách từ/cụm từ (ngăn cách bằng dấu phẩy hoặc xuống dòng), phân tích TỪNG mục (tối đa 12). Nếu là đoạn văn, chọn 4-6 từ/cụm từ đáng học nhất và lấy ngữ cảnh từ đoạn văn. Nếu là yêu cầu gợi ý từ theo chủ đề, tự chọn các từ phù hợp. Mức câu ví dụ: ${cefr === 'Auto' ? 'tự chọn theo độ khó của từ' : cefr}.\n${wordPromptRules()}\nTrả về MẢNG JSON, mỗi phần tử là một từ.`;
+        const res = await callGeminiCanvasAPI(prompt, { type: "ARRAY", items: WORD_ITEM_SCHEMA });
+        let list = JSON.parse(res); if (!Array.isArray(list)) list = [list];
+        list = list.filter(x => x && x.word).map(cleanDraft);
+        if (!list.length) throw new Error('empty');
+        extractedCandidatesCache = list;
+        if (list.length === 1) {
+            document.getElementById('form-id').value = '';
+            populateWordForm(list[0]);
+            document.getElementById('extracted-words-panel').classList.add('hidden');
+        } else { renderExtractedList(); }
+        showToast(`Đã phân tích xong ${list.length} từ!`, 'success');
+    } catch (e) {
+        showToast('AI chưa phản hồi được. Hãy thử lại hoặc kiểm tra khóa API ở ⚙.', 'warning');
+    } finally { btn.disabled = false; btn.innerHTML = orig; }
+}
+
+function renderExtractedList() {
+    const panel = document.getElementById('extracted-words-panel');
+    document.getElementById('extracted-words-list').innerHTML = extractedCandidatesCache.map((d, i) => `
+        <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5 text-xs">
+            <div class="flex items-center justify-between gap-2">
+                <span class="font-bold text-sm text-white">${escapeHtml(d.word)} <span class="font-mono text-[11px] text-indigo-300">${escapeHtml(d.ipa || '')}</span></span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded border ${getCefrBadgeClass(d.cefr)}">${d.cefr}</span>
+            </div>
+            <p class="text-emerald-300 font-semibold">${escapeHtml(d.meaning || '')}</p>
+            <p class="text-slate-400 italic">${escapeHtml(d.example || '')}</p>
+            <div class="flex gap-1.5 pt-1">
+                <button type="button" onclick="loadExtractedToForm(${i})" class="flex-1 px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold">Nạp xuống Form</button>
+                <button type="button" id="ext-save-${i}" onclick="saveExtractedQuick(${i})" class="flex-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white font-semibold">Lưu nhanh</button>
+            </div>
+        </div>`).join('');
+    panel.classList.remove('hidden');
+    panel.scrollIntoView({ behavior: 'smooth' });
+}
+
+function loadExtractedToForm(i) {
+    const d = extractedCandidatesCache[i]; if (!d) return;
+    document.getElementById('form-id').value = '';
+    populateWordForm(d);
+    document.getElementById('word-form').scrollIntoView({ behavior: 'smooth' });
+    showToast(`Đã nạp "${d.word}" xuống form. Chỉnh sửa rồi bấm Lưu.`, 'info');
+}
+
+function saveExtractedQuick(i) {
+    const d = extractedCandidatesCache[i]; if (!d) return;
+    if (words.some(w => w.word.toLowerCase() === String(d.word).toLowerCase())) { showToast(`"${d.word}" đã có trong kho.`, 'warning'); return; }
+    words.unshift(draftToWordObject(d)); saveState();
+    const b = document.getElementById('ext-save-' + i);
+    if (b) { b.disabled = true; b.textContent = 'Đã lưu ✓'; b.style.opacity = '.6'; }
+    showToast(`Đã lưu "${d.word}"!`, 'success');
+}
+
+// --- Cửa sổ tra cứu nhanh: tiếng Việt + đầy đủ thông tin ---
+async function openInstantLookupModal(phrase, context) {
+    hideSelectionBar();
+    const modal = document.getElementById('instant-lookup-modal'); const body = document.getElementById('instant-lookup-body');
+    modal.classList.remove('hidden');
+    body.innerHTML = `<div class="p-8 text-center text-slate-300"><i class="ph ph-spinner animate-spin text-2xl"></i><p class="mt-2">AI đang tra cứu "${escapeHtml(phrase)}"...</p></div>`;
+    try {
+        const res = await callGeminiCanvasAPI(`Tra từ/cụm từ "${phrase}" theo đúng nghĩa trong ngữ cảnh: "${String(context).slice(0, 300)}".\n${wordPromptRules()}\nTrả về 1 đối tượng JSON.`, WORD_ITEM_SCHEMA);
+        instantLookupDraft = cleanDraft(JSON.parse(res));
+    } catch (e) {
+        instantLookupDraft = cleanDraft({ word: phrase, pos: '', ipa: `/${phrase}/`, topic: 'Học thuật & Công nghệ', meaning: '(Chưa tra được, hãy thử lại)', example: String(context).slice(0, 300), exampleTrans: '', explanation: '' });
+    }
+    renderInstantLookupModalContent();
+}
+
+function renderInstantLookupModalContent() {
+    const body = document.getElementById('instant-lookup-body'); const d = instantLookupDraft; if (!d) return;
+    const med = [d.medPrefix, d.medRoot, d.medCombining, d.medSuffix].some(Boolean);
+    body.innerHTML = `
+        <div class="space-y-3 text-xs sm:text-sm">
+            <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="text-xl font-bold text-white">${escapeHtml(d.word)}</h3>
+                    <span class="text-indigo-300 font-mono text-xs">${escapeHtml(d.ipa)}</span>
+                    <button type="button" onclick="speakText('${escapeQuotes(d.word)}')" class="px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-300">🔊</button>
+                </div>
+                <div class="flex flex-wrap gap-1.5 mt-1.5 text-[11px]">
+                    <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">${escapeHtml(d.pos)}</span>
+                    <span class="px-2 py-0.5 rounded border font-mono font-bold ${getCefrBadgeClass(d.cefr)}">${d.cefr}</span>
+                    <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">📁 ${escapeHtml(d.topic)}</span>
+                </div>
+                <p class="text-emerald-300 font-semibold text-base mt-2">${escapeHtml(d.meaning)}</p>
+            </div>
+            ${med ? `<div class="p-2.5 rounded-xl bg-rose-950/30 border border-rose-500/30 font-mono text-[11px] text-rose-200">🏥 ${escapeHtml(d.medPrefix || '—')} | ${escapeHtml(d.medRoot || '—')} | ${escapeHtml(d.medCombining || '—')} | ${escapeHtml(d.medSuffix || '—')}</div>` : ''}
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                <p class="text-slate-200">"${escapeHtml(d.example)}"</p>
+                <p class="text-emerald-300 italic text-xs">${escapeHtml(d.exampleTrans)}</p>
+            </div>
+            ${d.collocations.length ? `<p class="font-mono text-xs text-emerald-300">${escapeHtml(d.collocations.join(', '))}</p>` : ''}
+            <div class="p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/30">
+                <strong class="text-indigo-300 block mb-1">Giải thích:</strong>
+                <p class="text-slate-300 text-xs">${escapeHtml(d.explanation)}</p>
+            </div>
+            <div class="flex flex-wrap justify-end gap-2 pt-2">
+                <button type="button" onclick="closeInstantLookupModal()" class="px-4 py-2 bg-slate-800 text-xs rounded-xl">Hủy</button>
+                <button type="button" onclick="openDraftInForm()" class="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-xl">Xem / sửa trong Form</button>
+                <button type="button" onclick="saveInstantDraftToVault()" class="px-5 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow">+ Lưu vào Kho</button>
+            </div>
+        </div>`;
+}
+
+function saveInstantDraftToVault() {
+    if (!instantLookupDraft) return;
+    words.unshift(draftToWordObject(instantLookupDraft)); saveState(); closeInstantLookupModal();
+    showToast(`Đã lưu "${instantLookupDraft.word}" thành công!`, 'success');
+}
+
+function openDraftInForm() {
+    if (!instantLookupDraft) return;
+    closeInstantLookupModal(); switchTab('add');
+    document.getElementById('form-id').value = '';
+    populateWordForm(instantLookupDraft);
+    setTimeout(() => document.getElementById('word-form').scrollIntoView({ behavior: 'smooth' }), 150);
+    showToast('Đã nạp vào form. Chỉnh sửa rồi bấm Lưu.', 'info');
+}
+
+// --- Bôi đen là hiện thanh tra cứu ngay dưới chữ ---
+var _selTimer = null, _selHideTimer = null;
+function handleTextSelection() {
+    const bar = document.getElementById('floating-selection-bar');
+    const ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return;
+    const sel = window.getSelection();
+    const text = sel ? sel.toString().trim() : '';
+    if (!sel || !sel.rangeCount || text.length < 2 || text.length > 60 || text.includes('\n')) {
+        clearTimeout(_selHideTimer);
+        _selHideTimer = setTimeout(() => { if (!window.getSelection().toString().trim()) bar.classList.add('hidden'); }, 5000);
+        return;
+    }
+    clearTimeout(_selHideTimer);
+    const range = sel.getRangeAt(0); let node = range.commonAncestorContainer;
+    if (node.nodeType === 3) node = node.parentNode;
+    currentSelectedPhrase = text;
+    currentSelectedContext = ((node.closest && node.closest('p, div, span, label')?.textContent) || '').trim().slice(0, 300) || `Context: "${text}"`;
+    document.getElementById('selected-phrase-preview').textContent = text;
+    bar.classList.remove('hidden');
+    const rect = range.getBoundingClientRect(), h = bar.offsetHeight || 90;
+    let top = rect.bottom + 56;
+    if (top + h > window.innerHeight - 8) top = Math.max(140, rect.top - h - 64);
+    bar.style.top = top + 'px';
+}
+document.addEventListener('selectionchange', () => { clearTimeout(_selTimer); _selTimer = setTimeout(handleTextSelection, 350); });
+
+// --- Tô màu đáp án: đúng xanh, sai đỏ ---
+var _renderQuizCardOriginal = renderQuizCard;
+renderQuizCard = function () {
+    _renderQuizCardOriginal();
+    if (!currentQuiz || !currentQuiz.answered || quizInputMode !== 'mcq') return;
+    const right = currentQuiz.wordObj.word.trim().toLowerCase();
+    const picked = String(currentQuiz.selectedAnswer || '').trim().toLowerCase();
+    document.querySelectorAll('#quiz-container .grid button').forEach(b => {
+        const t = b.textContent.trim().toLowerCase();
+        if (t === right) { b.style.cssText = 'background:rgba(16,185,129,.22);border-color:#34d399;color:#a7f3d0'; b.textContent = '✅ ' + b.textContent.trim(); }
+        else if (t === picked) { b.style.cssText = 'background:rgba(244,63,94,.22);border-color:#fb7185;color:#fecdd3'; b.textContent = '❌ ' + b.textContent.trim(); }
+        else { b.style.opacity = '.45'; }
+    });
+};
+// ===== HẾT BẢN VÁ 2 =====
+// ===== BẢN VÁ 3: nghe phát âm & chấm phát âm theo thời gian thực =====
+var _ttsVoice = null, _onlineAudio = null;
+function _pickVoice() {
+    try {
+        const vs = window.speechSynthesis.getVoices() || [];
+        _ttsVoice = vs.find(v => /^en[-_]US/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang)) || null;
+    } catch (e) {}
+}
+if ('speechSynthesis' in window) { _pickVoice(); window.speechSynthesis.onvoiceschanged = _pickVoice; }
+
+function playOnlineAudio(text) {
+    try {
+        if (_onlineAudio) _onlineAudio.pause();
+        _onlineAudio = new Audio('https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q=' + encodeURIComponent(text.slice(0, 190)));
+        _onlineAudio.play().catch(() => showToast('Khung chạy này chưa phát được giọng đọc. Hãy thử mở app bằng Chrome.'));
+    } catch (e) { showToast('Khung chạy này chưa phát được giọng đọc.'); }
+}
+
+function speakText(text, rate) {
+    text = String(text || '').trim(); if (!text) return;
+    let done = false, started = false;
+    const fallback = () => { if (!done && !started) { done = true; playOnlineAudio(text); } };
+    if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') { fallback(); return; }
+    try {
+        const synth = window.speechSynthesis;
+        synth.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US'; u.rate = rate || 0.92; if (_ttsVoice) u.voice = _ttsVoice;
+        u.onstart = () => { started = true; };
+        u.onerror = fallback;
+        setTimeout(() => { try { synth.resume(); synth.speak(u); } catch (e) { fallback(); } }, 80);
+        setTimeout(() => { if (!started) { try { synth.cancel(); } catch (e) {} fallback(); } }, 2000);
+    } catch (e) { fallback(); }
+}
+
+function _normW(w) { return String(w).toLowerCase().replace(/[^a-z0-9']/g, ''); }
+
+function _alignWords(tg, sp) {
+    const n = tg.length, m = sp.length;
+    const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+    for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++)
+        dp[i][j] = tg[i - 1] === sp[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+    const ok = new Array(n).fill(false);
+    let i = n, j = m;
+    while (i > 0 && j > 0) {
+        if (tg[i - 1] === sp[j - 1]) { ok[i - 1] = true; i--; j--; }
+        else if (dp[i - 1][j] >= dp[i][j - 1]) i--; else j--;
+    }
+    return ok;
+}
+
+function _micErrorText(c) {
+    if (c === 'no-speech') return '😶 Không nghe thấy tiếng. Bấm lại và đọc to hơn.';
+    if (c === 'network') return '🌐 Nhận diện giọng nói cần có Internet.';
+    if (c === 'audio-capture') return '🎙️ Không truy cập được micro.';
+    return '🚫 Khung chạy này chưa cho dùng micro/nhận diện giọng nói (mã: ' + escapeHtml(c || 'không hỗ trợ') + '). Hãy mở app bằng Chrome và cho phép micro.';
+}
+
+function _paintPron(st, final, msg) {
+    const box = document.getElementById('pronunciation-result-box'); if (!box) return;
+    const spoken = st.text.split(/\s+/).map(_normW).filter(Boolean);
+    const ok = _alignWords(st.norm, spoken), last = ok.lastIndexOf(true);
+    const hit = ok.filter(Boolean).length;
+    const wordsHtml = st.tokens.map((t, i) => {
+        const c = ok[i] ? 'text-emerald-300 font-bold' : (i < last || (final && spoken.length)) ? 'text-rose-300 font-bold underline decoration-dotted' : 'text-slate-500';
+        return `<span class="${c}">${escapeHtml(t)}</span>`;
+    }).join(' ');
+    let foot = '';
+    if (final && spoken.length) {
+        const acc = Math.round(hit / st.norm.length * 100);
+        const secs = Math.max(1, (st.t1 - st.t0) / 1000), wpm = Math.round(spoken.length / secs * 60);
+        const lv = acc >= 90 ? 'C2 (Chuẩn bản xứ)' : acc >= 80 ? 'C1 (Cao cấp)' : acc >= 65 ? 'B2 (Trung cao cấp)' : acc >= 50 ? 'B1 (Trung cấp)' : acc >= 30 ? 'A2 (Sơ cấp)' : 'A1 (Cơ bản)';
+        const focus = st.focus >= 0 ? (ok[st.focus] ? ` • Từ cần học: ✅ đọc đúng` : ` • Từ cần học: ❌ chưa đúng`) : '';
+        foot = `<p class="text-xs text-slate-200">🎙️ Độ khớp <b>${acc}%</b> — Bậc: <b>${lv}</b>${wpm <= 250 ? ` (${wpm} WPM)` : ''}${focus}</p>`;
+        if (st.w) { st.w.lastPronunciation = { level: lv, accuracy: acc, wpm: wpm <= 250 ? wpm : null }; saveState(); }
+        showToast('Đánh giá phát âm: ' + lv);
+    }
+    box.classList.remove('hidden');
+    box.innerHTML = `<div class="space-y-2">
+        <div class="flex items-center justify-between gap-2"><span class="text-[11px] text-slate-400">🟢 đúng • 🔴 sai/thiếu • ⚪ chưa đọc</span>
+        <button type="button" onclick="speakText('${escapeHtml(escapeQuotes(st.sentence))}')" class="px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 text-[11px]">🔊 Nghe cả câu</button></div>
+        <p class="text-base leading-relaxed">${wordsHtml}</p>
+        ${st.text ? `<p class="text-[11px] text-slate-400 italic">Bạn nói: "${escapeHtml(st.text)}"</p>` : ''}
+        ${foot}${msg ? `<p class="text-xs text-amber-300">${msg}</p>` : ''}</div>`;
+}
+
+function recordAndEvaluatePronunciation(wordId) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const mic = document.getElementById('btn-quiz-mic');
+    if (!currentQuiz) return;
+    if (activeSpeechRec) { try { activeSpeechRec.stop(); } catch (e) {} return; }
+    const w = words.find(i => i.id === wordId);
+    const sentence = currentQuiz.sentence.replace(/___+/g, w ? w.word : '');
+    const tokens = sentence.split(/\s+/).filter(Boolean), norm = tokens.map(_normW);
+    const st = { tokens, norm, sentence, w, text: '', t0: 0, t1: 0, focus: w ? norm.indexOf(_normW(w.word)) : -1 };
+    if (!SR) { _paintPron(st, true, _micErrorText('')); return; }
+    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+    const rec = new SR(); activeSpeechRec = rec;
+    rec.lang = 'en-US'; rec.continuous = false; rec.interimResults = true; rec.maxAlternatives = 1;
+    let err = '';
+    rec.onstart = () => {
+        if (mic) { mic.classList.add('mic-active'); mic.innerHTML = '<i class="ph-fill ph-stop"></i> Dừng'; }
+        _paintPron(st, false, '🎤 Đang nghe... hãy đọc to câu trên');
+    };
+    rec.onspeechstart = () => { st.t0 = Date.now(); };
+    rec.onresult = (e) => {
+        let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript + ' ';
+        st.text = t.trim(); st.t1 = Date.now(); if (!st.t0) st.t0 = st.t1 - 1500;
+        _paintPron(st, false, '');
+    };
+    rec.onerror = (e) => { err = e.error || 'error'; };
+    rec.onend = () => {
+        activeSpeechRec = null;
+        if (mic) { mic.classList.remove('mic-active'); mic.innerHTML = '<i class="ph-fill ph-microphone"></i> Bấm đọc'; }
+        _paintPron(st, true, st.text ? '' : _micErrorText(err));
+    };
+    try { rec.start(); } catch (e) { activeSpeechRec = null; _paintPron(st, true, _micErrorText('not-allowed')); }
+}
+// ===== HẾT BẢN VÁ 3 =====
+// ===== BẢN VÁ 4: ĐỒNG BỘ KHO TỪ TỨC THÌ & CHẠY ĐỘC LẬP NGOÀI WEB KHÔNG CẦN CANVAS =====
+
+// 1. Nâng cấp hàm gọi Gemini API hỗ trợ đa model khi chạy ngoài Web
+async function callGeminiCanvasAPI(promptText, responseSchema = null) {
+    const customKey = (localStorage.getItem(STORAGE_KEYS.API_KEY) || "").trim();
+    const activeKey = customKey !== "" ? customKey : apiKey;
+    const endpoints = [
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${activeKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${activeKey}`
+    ];
+    const payload = { contents: [{ parts: [{ text: promptText }] }] };
+    if (responseSchema) payload.generationConfig = { responseMimeType: "application/json", responseSchema };
+
+    for (const apiUrl of endpoints) {
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (response.ok) {
+                const result = await response.json();
+                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) return text;
+            }
+        } catch (err) {}
+    }
+    throw new Error("API_UNAVAILABLE");
+}
+
+// 2. Bộ phân tích Web tự động (Free Dictionary + Google Dịch + Giải phẫu Y khoa) khi chạy ngoài Canvas không có API Key
+async function translateEnToViFree(text) {
+    if (!text) return '';
+    try {
+        const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=' + encodeURIComponent(text);
+        const res = await fetch(url);
+        if (res.ok) {
+            const data = await res.json();
+            return (data?.[0] || []).map(item => item?.[0] || '').join('');
+        }
+    } catch (e) {}
+    return '';
+}
+
+function dissectMedTermSmart(rawWord) {
+    const w = String(rawWord || '').trim().toLowerCase();
+    const suffixes = [
+        { s: 'itis', l: '-itis (viêm)' }, { s: 'ectomy', l: '-ectomy (phẫu thuật cắt bỏ)' },
+        { s: 'pathy', l: '-pathy (bệnh lý)' }, { s: 'cardia', l: '-cardia (nhịp tim)' },
+        { s: 'emia', l: '-emia (máu)' }, { s: 'oma', l: '-oma (khối u)' }, { s: 'ology', l: '-ology (chuyên khoa)' }
+    ];
+    const prefixes = [
+        { p: 'hyper', l: 'hyper- (tăng cao)' }, { p: 'hypo', l: 'hypo- (giảm thấp)' },
+        { p: 'brady', l: 'brady- (chậm)' }, { p: 'tachy', l: 'tachy- (nhanh)' },
+        { p: 'endo', l: 'endo- (bên trong)' }, { p: 'peri', l: 'peri- (xung quanh)' }
+    ];
+    const roots = {
+        'appendic': 'appendic (ruột thừa)', 'cardi': 'cardi (tim)', 'myo': 'my/o (cơ)',
+        'nephr': 'nephr (thận)', 'hepat': 'hepat (gan)', 'gastr': 'gastr (dạ dày)',
+        'neur': 'neur (thần kinh)', 'arthr': 'arthr (khớp)', 'pulmon': 'pulmon (phổi)'
+    };
+    const ms = suffixes.find(x => w.endsWith(x.s));
+    const mp = prefixes.find(x => w.startsWith(x.p));
+    const mr = Object.keys(roots).find(r => w.includes(r));
+    if (!ms && !mp && !mr) return { isMed: false, medPrefix: '', medRoot: '', medCombining: '', medSuffix: '' };
+    return {
+        isMed: true,
+        medPrefix: mp ? mp.l : 'Không có',
+        medRoot: mr ? roots[mr] : w.replace(/(itis|ectomy|pathy|cardia|emia|oma|ology)$/, '') + ' (gốc giải phẫu)',
+        medCombining: '-o-',
+        medSuffix: ms ? ms.l : 'Không có'
+    };
+}
+
+async function fallbackWebAnalyzeSingleWord(rawWord, contextHint = '') {
+    const cleanW = String(rawWord || '').trim();
+    const med = dissectMedTermSmart(cleanW);
+    let pos = med.isMed ? 'noun' : 'word';
+    let ipa = `/${cleanW}/`;
+    let engDef = '';
+    let example = contextHint && contextHint.length > 10 && !contextHint.startsWith('Context:')
+        ? contextHint
+        : `Understanding the term "${cleanW}" is essential in professional communication.`;
+
+    try {
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanW.toLowerCase())}`);
+        if (res.ok) {
+            const arr = await res.json();
+            const entry = arr?.[0];
+            if (entry) {
+                ipa = entry.phonetic || (entry.phonetics?.find(p => p.text)?.text) || ipa;
+                const m0 = entry.meanings?.[0];
+                if (m0) {
+                    pos = m0.partOfSpeech || pos;
+                    engDef = m0.definitions?.[0]?.definition || '';
+                    const foundEx = m0.definitions?.find(d => d.example)?.example;
+                    if (foundEx) example = foundEx;
+                }
+            }
+        }
+    } catch (e) {}
+
+    const [viMeaning, viDef, viExTrans] = await Promise.all([
+        translateEnToViFree(cleanW),
+        engDef ? translateEnToViFree(engDef) : Promise.resolve(''),
+        translateEnToViFree(example)
+    ]);
+
+    const regex = new RegExp(cleanW.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    const quizSentence = regex.test(example) ? example.replace(regex, '___') : `In this context, the most appropriate term is ___.`;
+
+    return cleanDraft({
+        word: cleanW,
+        pos,
+        ipa,
+        cefr: med.isMed ? 'B2' : 'B2',
+        topic: med.isMed ? 'Y khoa - Lâm sàng' : (topics[0]?.name || 'Học thuật & Công nghệ'),
+        sentenceDifficulty: 'Trung bình (B1-B2)',
+        medPrefix: med.medPrefix,
+        medRoot: med.medRoot,
+        medCombining: med.medCombining,
+        medSuffix: med.medSuffix,
+        meaning: viMeaning ? (viDef ? `${viMeaning} (${viDef})` : viMeaning) : (engDef || `Nghĩa của "${cleanW}"`),
+        example,
+        exampleTrans: viExTrans || 'Bản dịch câu ngữ cảnh.',
+        collocations: [cleanW],
+        explanation: engDef ? `Định nghĩa gốc: ${engDef}${viDef ? ` — Dịch: ${viDef}` : ''}` : `Từ vựng "${cleanW}" được phân tích tự động qua Web.`,
+        personalNote: med.isMed ? `${med.medRoot} + ${med.medSuffix}` : '',
+        quizSentence,
+        quizTrans: viExTrans || ''
+    });
+}
+
+// 3. Ghi đè analyzeWithAI & openInstantLookupModal để tự động dùng Web Fallback khi chạy ngoài Canvas
+analyzeWithAI = async function () {
+    const raw = document.getElementById('ai-quick-input').value.trim();
+    if (!raw) { showToast('Vui lòng nhập từ hoặc đoạn văn!', 'warning'); return; }
+    const cefr = document.getElementById('cefr-level-select').value;
+    const btn = document.getElementById('btn-ai-analyze');
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> Đang phân tích...`;
+
+    try {
+        const prompt = `Bạn là giáo viên tiếng Anh & Y khoa. Người dùng nhập: """${raw}"""\nNếu là danh sách từ/cụm từ (ngăn cách bằng dấu phẩy hoặc xuống dòng), phân tích TỪNG mục (tối đa 12). Nếu là đoạn văn, chọn 4-6 từ/cụm từ đáng học nhất. Mức câu ví dụ: ${cefr === 'Auto' ? 'tự chọn theo độ khó của từ' : cefr}.\n${wordPromptRules()}\nTrả về MẢNG JSON.`;
+        const res = await callGeminiCanvasAPI(prompt, { type: "ARRAY", items: WORD_ITEM_SCHEMA });
+        let list = JSON.parse(res);
+        if (!Array.isArray(list)) list = [list];
+        list = list.filter(x => x && x.word).map(cleanDraft);
+        if (!list.length) throw new Error('empty');
+        extractedCandidatesCache = list;
+        if (list.length === 1) {
+            document.getElementById('form-id').value = '';
+            populateWordForm(list[0]);
+            document.getElementById('extracted-words-panel').classList.add('hidden');
+        } else {
+            renderExtractedList();
+        }
+        showToast(`Đã phân tích xong ${list.length} từ bằng Gemini AI!`, 'success');
+    } catch (e) {
+        // Tự động chuyển sang phân tích Web miễn phí nếu chạy ngoài Canvas chưa có API Key
+        const items = raw.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean).slice(0, 6);
+        const list = await Promise.all(items.map(w => fallbackWebAnalyzeSingleWord(w)));
+        extractedCandidatesCache = list;
+        if (list.length === 1) {
+            document.getElementById('form-id').value = '';
+            populateWordForm(list[0]);
+            document.getElementById('extracted-words-panel').classList.add('hidden');
+        } else {
+            renderExtractedList();
+        }
+        showToast('Đã phân tích qua Từ điển Web! (Dán Gemini API Key ở ⚙ nếu muốn dùng AI sâu hơn)', 'info');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+    }
+};
+
+openInstantLookupModal = async function (phrase, context) {
+    hideSelectionBar();
+    const modal = document.getElementById('instant-lookup-modal');
+    const body = document.getElementById('instant-lookup-body');
+    modal.classList.remove('hidden');
+    body.innerHTML = `<div class="p-8 text-center text-slate-300"><i class="ph ph-spinner animate-spin text-2xl"></i><p class="mt-2">Đang tra cứu "${escapeHtml(phrase)}"...</p></div>`;
+    try {
+        const res = await callGeminiCanvasAPI(`Tra từ/cụm từ "${phrase}" theo đúng nghĩa trong ngữ cảnh: "${String(context).slice(0, 300)}".\n${wordPromptRules()}\nTrả về 1 đối tượng JSON.`, WORD_ITEM_SCHEMA);
+        instantLookupDraft = cleanDraft(JSON.parse(res));
+    } catch (e) {
+        instantLookupDraft = await fallbackWebAnalyzeSingleWord(phrase, String(context).slice(0, 300));
+    }
+    renderInstantLookupModalContent();
+};
+
+// 4. Đảm bảo 100% từ lưu xong hiện ngay lập tức trong Kho từ (Reset bộ lọc & gọi renderVault)
+function _unlockVaultAndRender() {
+    currentTopicFilter = 'ALL';
+    currentCefrFilter = 'ALL';
+    currentFilter = 'all';
+    const searchEl = document.getElementById('vault-search');
+    if (searchEl) searchEl.value = '';
+    saveState();
+    renderVault();
+}
+
+var _origSaveWordFromForm = saveWordFromForm;
+saveWordFromForm = function (e) {
+    _origSaveWordFromForm(e);
+    _unlockVaultAndRender();
+};
+
+saveExtractedQuick = function (i) {
+    const d = extractedCandidatesCache[i];
+    if (!d) return;
+    if (words.some(w => w.word.toLowerCase() === String(d.word).toLowerCase())) {
+        showToast(`"${d.word}" đã có trong kho.`, 'warning');
+        return;
+    }
+    words.unshift(draftToWordObject(d));
+    _unlockVaultAndRender();
+    const b = document.getElementById('ext-save-' + i);
+    if (b) { b.disabled = true; b.textContent = 'Đã lưu ✓'; b.style.opacity = '.6'; }
+    showToast(`Đã lưu "${d.word}" vào Kho từ!`, 'success');
+};
+
+saveInstantDraftToVault = function () {
+    if (!instantLookupDraft) return;
+    words.unshift(draftToWordObject(instantLookupDraft));
+    _unlockVaultAndRender();
+    closeInstantLookupModal();
+    showToast(`Đã lưu "${instantLookupDraft.word}" vào Kho từ!`, 'success');
+};
+// ===== HẾT BẢN VÁ 4 =====
+// ===== BẢN VÁ 5: dán xuống dưới bản vá 4, phía trên dòng "window.onload". Chỉ dán 1 lần =====
+
+// 0) Lưu trữ an toàn: nếu trang chủ chặn localStorage thì dùng bộ nhớ tạm và cảnh báo
+(function () {
+    try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); window.__storageOK = true; }
+    catch (e) {
+        window.__storageOK = false;
+        const mem = {};
+        const shim = { getItem: k => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); }, removeItem: k => { delete mem[k]; }, clear: () => { for (const k in mem) delete mem[k]; } };
+        try { Object.defineProperty(window, 'localStorage', { value: shim, configurable: true }); } catch (e2) {}
+        const b = document.createElement('div');
+        b.className = 'fixed bottom-2 left-2 right-2 z-50 p-3 rounded-xl bg-amber-900/95 border border-amber-500/50 text-amber-100 text-xs';
+        b.textContent = '⚠️ Trang này chặn lưu trữ: từ vựng và khóa API sẽ MẤT khi tải lại. Hãy bấm ⚙ → Xuất dữ liệu (Backup) thường xuyên. (Chạm để ẩn)';
+        b.onclick = () => b.remove(); document.body.appendChild(b);
+    }
+})();
+
+// 1) Làm sạch ký tự thừa (dấu * của danh sách, số thứ tự, ngoặc kép)
+function cleanTerm(s) {
+    return String(s == null ? '' : s).replace(/\*+/g, '').replace(/^\s*(?:[-•·●▪◦>]+|\d+[.)])\s+/, '').replace(/^["'“”‘’\s]+|["'“”‘’\s]+$/g, '').trim();
+}
+var _nwo = normalizeWordObject;
+normalizeWordObject = function (w) {
+    const o = _nwo(Object.assign({}, w, { word: cleanTerm(w.word) }));
+    ['example', 'exampleTrans', 'meaning', 'explanation'].forEach(k => { o[k] = String(o[k] || '').replace(/\*+/g, ''); });
+    o.quizPool = (o.quizPool || []).map(q => Object.assign({}, q, { sentence: String(q.sentence || '').replace(/\*+\s?/g, '') }));
+    return o;
+};
+var _cd = cleanDraft;
+cleanDraft = function (d) { return _cd(Object.assign({}, d, { word: cleanTerm(d.word) })); };
+if (typeof fallbackWebAnalyzeSingleWord === 'function') { var _fw = fallbackWebAnalyzeSingleWord; fallbackWebAnalyzeSingleWord = function (w, c) { return _fw(cleanTerm(w), c); }; }
+var _wpr = wordPromptRules;
+wordPromptRules = function () {
+    return _wpr() + ' Quan trọng: nếu mục là cụm động từ, thành ngữ hoặc cấu trúc đi với giới từ (go to, look forward to, depend on...) thì topic PHẢI là "Cụm Động Từ & Giao Tiếp", pos ghi "phrase", collocations liệt kê các cấu trúc đi cùng, explanation nêu rõ quy tắc dùng (ví dụ sau "look forward to" là danh từ hoặc V-ing). Tuyệt đối không dùng ký tự * hay gạch đầu dòng trong các trường.';
+};
+
+// 2) Gọi Gemini: tự tìm model còn dùng được theo khóa của bạn và báo lỗi thật
+var _aiLastError = '', _aiModels = null, _aiModelsKey = '', _aiUsedModel = '';
+function _aiKey() { try { return (localStorage.getItem(STORAGE_KEYS.API_KEY) || '').trim(); } catch (e) { return ''; } }
+
+async function _discoverModels(key) {
+    if (_aiModels && _aiModelsKey === key) return _aiModels;
+    let names = [];
+    try {
+        const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(key));
+        if (r.ok) {
+            const j = await r.json();
+            names = (j.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+                .map(m => String(m.name).replace('models/', ''))
+                .filter(n => /^gemini-/.test(n) && /flash/.test(n) && !/image|tts|live|audio|embed|exp|robotics|computer|thinking|vision/.test(n));
+        }
+    } catch (e) {}
+    const rank = n => { const v = parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1]); return (/latest/.test(n) ? 100 : v) * 10 - (/lite/.test(n) ? 3 : 0) - (/preview/.test(n) ? 2 : 0); };
+    names.sort((a, b) => rank(b) - rank(a));
+    _aiModels = names.slice(0, 3).concat(['gemini-flash-latest', 'gemini-2.5-flash']).filter((n, i, a) => a.indexOf(n) === i);
+    _aiModelsKey = key;
+    return _aiModels;
+}
+
+async function _geminiOnce(model, key, text, schema) {
+    try {
+        const body = { contents: [{ parts: [{ text }] }] };
+        if (schema) body.generationConfig = { responseMimeType: 'application/json', responseSchema: schema };
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (r.ok) { const j = await r.json(); return { ok: true, text: (j?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('') }; }
+        let msg = ''; try { msg = (await r.json())?.error?.message || ''; } catch (e) {}
+        return { ok: false, status: r.status, msg };
+    } catch (e) { return { ok: false, status: 0, msg: 'Lỗi mạng hoặc bị chặn: ' + e.message }; }
+}
+
+callGeminiCanvasAPI = async function (promptText, schema) {
+    const key = _aiKey();
+    const models = key ? await _discoverModels(key) : ['gemini-2.5-flash', 'gemini-2.5-flash-preview-09-2025'];
+    let err = '';
+    for (const model of models) {
+        let res = await _geminiOnce(model, key, promptText, schema);
+        if (!res.ok && res.status === 400 && schema && !/api key/i.test(res.msg)) res = await _geminiOnce(model, key, promptText + '\n\nChỉ trả về JSON thuần, không kèm chú thích.', null);
+        if (res.ok && res.text) { _aiLastError = ''; _aiUsedModel = model; return res.text.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, ''); }
+        err = `${model} → ${res.ok ? 'trả về rỗng' : 'HTTP ' + res.status + ': ' + String(res.msg).slice(0, 150)}`;
+        if (res.status === 0 || res.status === 401 || res.status === 403 || (res.status === 400 && /api key/i.test(res.msg))) break;
+    }
+    _aiLastError = err; throw new Error(err);
+};
+
+async function testAIConnection() {
+    const out = document.getElementById('ai-test-result'); out.textContent = '⏳ Đang kiểm tra...';
+    const k = (document.getElementById('settings-api-key').value || '').trim();
+    if (k) { try { localStorage.setItem(STORAGE_KEYS.API_KEY, k); } catch (e) {} _aiModels = null; }
+    try {
+        await callGeminiCanvasAPI('Trả lời đúng 1 từ: OK');
+        out.innerHTML = `✅ Kết nối AI thành công (model: ${escapeHtml(_aiUsedModel)}). ${window.__storageOK ? 'Khóa được lưu trong trình duyệt.' : '⚠️ Trang này chặn lưu trữ nên khóa chỉ nhớ đến khi tải lại.'}`;
+    } catch (e) { out.innerHTML = '❌ ' + escapeHtml(e.message) + (k || _aiKey() ? '' : '<br>Chưa có khóa API: hãy dán khóa ở ô phía trên rồi bấm Lưu Key.'); }
+}
+(function () {
+    const row = document.getElementById('settings-api-key')?.parentElement?.parentElement; if (!row) return;
+    const d = document.createElement('div'); d.className = 'pt-2 space-y-2';
+    d.innerHTML = '<button type="button" id="btn-ai-test" class="px-4 py-2 rounded-xl bg-slate-800 text-emerald-300 text-xs font-semibold border border-slate-700">🔍 Kiểm tra kết nối AI</button><div id="ai-test-result" class="text-xs text-slate-300 break-words"></div>';
+    row.appendChild(d); document.getElementById('btn-ai-test').onclick = testAIConnection;
+})();
+
+// 3) Đáp án nhiễu cùng chủ đề (và cùng từ loại, cùng cấp độ) để bài tập khó hơn
+function _smartOptions(t) {
+    const seen = new Set([t.word.toLowerCase()]), picks = [];
+    const pool = words.filter(w => w.id !== t.id).map(w => ({ w, s: (w.topic === t.topic ? 4 : 0) + (w.pos === t.pos ? 2 : 0) + (w.cefr === t.cefr ? 1 : 0) + Math.random() * 0.9 })).sort((a, b) => b.s - a.s);
+    for (const { w } of pool) { const k = w.word.toLowerCase(); if (!seen.has(k)) { seen.add(k); picks.push(w.word); } if (picks.length === 3) break; }
+    return picks.concat(t.word).map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(p => p[1]);
+}
+var _gq = generateQuizQuestion;
+generateQuizQuestion = function (forcedId, mistakeObj) {
+    _gq(forcedId, mistakeObj);
+    if (currentQuiz && currentQuiz.wordObj) { currentQuiz.options = _smartOptions(currentQuiz.wordObj); renderQuizCard(); }
+};
+
+// 4) AI tự sắp xếp từ vào chủ đề (xem trước, chọn mục muốn áp dụng)
+var _sortPlan = [];
+async function aiSortTopics() {
+    const out = document.getElementById('ai-sort-preview'), btn = document.getElementById('btn-ai-sort');
+    if (!words.length) { out.textContent = 'Kho chưa có từ nào.'; return; }
+    btn.disabled = true; btn.textContent = '⏳ AI đang phân loại...'; out.innerHTML = '';
+    try {
+        const list = words.slice(0, 80).map(w => ({ id: w.id, word: w.word, meaning: w.meaning, topic: w.topic }));
+        const prompt = `Bạn là giáo viên tiếng Anh. Hãy xếp mỗi từ/cụm từ sau vào chủ đề PHÙ HỢP NHẤT.\nChủ đề hiện có: ${JSON.stringify(topics.map(t => ({ name: t.name, desc: t.desc })))}\nQuy tắc: ưu tiên chủ đề hiện có (ghi đúng tên); chỉ đề xuất chủ đề mới (tên ngắn tiếng Việt, kèm newTopicDesc) khi từ không hợp chủ đề nào và có ít nhất 2 từ cùng nhóm; cụm động từ, thành ngữ, cấu trúc đi cùng giới từ thuộc "Cụm Động Từ & Giao Tiếp"; "reason" tối đa 12 từ tiếng Việt.\nDanh sách: ${JSON.stringify(list)}\nTrả về MẢNG JSON đủ mọi từ.`;
+        const schema = { type: 'ARRAY', items: { type: 'OBJECT', properties: { id: { type: 'STRING' }, topic: { type: 'STRING' }, newTopicDesc: { type: 'STRING' }, reason: { type: 'STRING' } }, required: ['id', 'topic', 'reason'] } };
+        const res = JSON.parse(await callGeminiCanvasAPI(prompt, schema));
+        _sortPlan = (Array.isArray(res) ? res : []).map(r => Object.assign({}, r, { topic: cleanTerm(r.topic) })).filter(r => r.topic && words.some(w => w.id === r.id));
+        renderSortPreview();
+    } catch (e) { out.innerHTML = `<div class="text-rose-300">❌ AI chưa sắp xếp được: ${escapeHtml(e.message)}</div>`; }
+    finally { btn.disabled = false; btn.textContent = '🗂️ Nhờ AI sắp xếp từ vào chủ đề'; }
+}
+function renderSortPreview() {
+    const out = document.getElementById('ai-sort-preview');
+    const rows = _sortPlan.map((r, i) => {
+        const w = words.find(x => x.id === r.id), ex = topics.find(t => t.name.toLowerCase() === r.topic.toLowerCase());
+        if (ex) r.topic = ex.name;
+        const ch = r.topic !== w.topic;
+        return `<label class="flex items-start gap-2 p-2 rounded-xl bg-slate-950 border ${ch ? 'border-emerald-500/40' : 'border-slate-800'}"><input type="checkbox" id="sort-ck-${i}" ${ch ? 'checked' : ''} class="mt-1"><span class="flex-1"><b class="text-white">${escapeHtml(w.word)}</b> <span class="text-slate-400">${escapeHtml(w.topic)}</span> → <b class="${ch ? 'text-emerald-300' : 'text-slate-400'}">${escapeHtml(r.topic)}${ex ? '' : ' (chủ đề mới)'}</b><br><span class="text-[11px] text-slate-400">${escapeHtml(r.reason || '')}</span></span></label>`;
+    }).join('');
+    out.innerHTML = `<div class="space-y-2">${rows || 'AI không đề xuất thay đổi nào.'}<div class="flex justify-end gap-2 pt-1"><button type="button" onclick="document.getElementById('ai-sort-preview').innerHTML=''" class="px-3 py-1.5 rounded-xl bg-slate-800 text-xs">Hủy</button><button type="button" onclick="applySortPlan()" class="px-4 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold">Áp dụng các mục đã chọn</button></div></div>`;
+}
+function applySortPlan() {
+    let n = 0;
+    _sortPlan.forEach((r, i) => {
+        const ck = document.getElementById('sort-ck-' + i), w = words.find(x => x.id === r.id);
+        if (!ck || !ck.checked || !w) return;
+        let t = topics.find(x => x.name.toLowerCase() === r.topic.toLowerCase());
+        if (!t) { t = { name: r.topic, desc: r.newTopicDesc || `Chủ đề ${r.topic}` }; topics.push(t); }
+        if (w.topic !== t.name) { w.topic = t.name; n++; }
+    });
+    saveState(); renderTopicManagerContent(); renderVault();
+    document.getElementById('ai-sort-preview').innerHTML = `<div class="text-emerald-300">✅ Đã chuyển ${n} từ sang chủ đề phù hợp.</div>`;
+}
+(function () {
+    const adv = document.getElementById('ai-advisor-output'); if (!adv || !adv.parentElement) return;
+    const box = document.createElement('div'); box.className = 'p-4 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 space-y-2.5';
+    box.innerHTML = '<div class="flex flex-wrap items-center justify-between gap-2"><span class="text-xs font-bold text-emerald-300">AI tự sắp xếp từ vựng vào chủ đề</span><button type="button" id="btn-ai-sort" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold">🗂️ Nhờ AI sắp xếp từ vào chủ đề</button></div><p class="text-[11px] text-slate-400">AI đề xuất, bạn xem và tick mục muốn áp dụng. Muốn tự làm thì dùng khung "Di chuyển từ vựng" bên dưới.</p><div id="ai-sort-preview" class="text-xs"></div>';
+    adv.parentElement.insertAdjacentElement('afterend', box); document.getElementById('btn-ai-sort').onclick = aiSortTopics;
+})();
+
+// 5) Hỏi AI tự do về đoạn bôi đen (cả câu dài tới 400 ký tự)
+var _askCtx = null, _askHist = [];
+function openAskAI(phrase, context) {
+    hideSelectionBar();
+    _askCtx = { phrase: String(phrase || ''), context: String(context || '').slice(0, 400) }; _askHist = [];
+    document.getElementById('instant-lookup-modal').classList.remove('hidden');
+    const chips = ['Tại sao dùng từ/cấu trúc này ở đây?', 'Giải thích ngữ pháp của câu này', 'Cho thêm 3 ví dụ', 'Phân biệt với từ/cấu trúc gần nghĩa'];
+    const body = document.getElementById('instant-lookup-body');
+    body.innerHTML = `<div class="space-y-3 text-xs sm:text-sm"><div class="p-3 rounded-xl bg-slate-950 border border-slate-800"><b class="text-amber-300">«${escapeHtml(_askCtx.phrase)}»</b><p class="text-slate-400 mt-1">${escapeHtml(_askCtx.context)}</p></div><div class="flex flex-wrap gap-1.5">${chips.map(c => `<button type="button" class="ask-chip px-2.5 py-1 rounded-lg bg-indigo-500/15 text-indigo-200 border border-indigo-500/30 text-[11px]">${c}</button>`).join('')}</div><div id="ask-log" class="space-y-2 max-h-[40vh] overflow-y-auto"></div><div class="flex gap-2"><input id="ask-input" type="text" placeholder="Hỏi bất kỳ điều gì về đoạn này..." class="flex-1 px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white"><button type="button" id="ask-send" class="px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold">Hỏi</button></div><div class="flex justify-end"><button type="button" id="ask-lookup" class="px-3 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs">✨ Tra cứu & tạo thẻ từ</button></div></div>`;
+    body.querySelectorAll('.ask-chip').forEach(b => { b.onclick = () => askAI(b.textContent); });
+    document.getElementById('ask-send').onclick = () => askAI(document.getElementById('ask-input').value);
+    document.getElementById('ask-input').addEventListener('keydown', e => { if (e.key === 'Enter') askAI(e.target.value); });
+    document.getElementById('ask-lookup').onclick = () => openInstantLookupModal(_askCtx.phrase, _askCtx.context);
+}
+async function askAI(q) {
+    q = String(q || '').trim(); if (!q || !_askCtx) return;
+    const log = document.getElementById('ask-log'), inp = document.getElementById('ask-input'); inp.value = '';
+    const add = (cls, html) => { const d = document.createElement('div'); d.className = cls; d.innerHTML = html; log.appendChild(d); log.scrollTop = log.scrollHeight; return d; };
+    add('p-2.5 rounded-xl bg-indigo-600/30 text-white', escapeHtml(q));
+    const wait = add('p-2.5 rounded-xl bg-slate-900 text-slate-400', '⏳ AI đang trả lời...');
+    const hist = _askHist.map(h => `${h.r === 'u' ? 'Người học' : 'Gia sư'}: ${h.t}`).join('\n');
+    const prompt = `Bạn là gia sư tiếng Anh thân thiện cho người Việt. Trả lời bằng tiếng Việt, rõ ràng, đúng trọng tâm, ví dụ tiếng Anh kèm dịch; có thể dùng **in đậm**.\nĐoạn người học đang hỏi: "${_askCtx.phrase}"\nCâu/ngữ cảnh chứa nó: "${_askCtx.context}"\n${hist ? 'Hội thoại trước:\n' + hist + '\n' : ''}Câu hỏi mới: ${q}`;
+    try {
+        const a = await callGeminiCanvasAPI(prompt);
+        _askHist.push({ r: 'u', t: q }, { r: 'a', t: a });
+        wait.className = 'p-2.5 rounded-xl bg-slate-900 text-slate-200 leading-relaxed';
+        wait.innerHTML = escapeHtml(a).replace(/^\s*\*\s+/gm, '• ').replace(/\*\*(.+?)\*\*/g, '<b class="text-white">$1</b>').replace(/\n/g, '<br>');
+    } catch (e) { wait.className = 'p-2.5 rounded-xl bg-slate-900 text-rose-300'; wait.innerHTML = '❌ ' + escapeHtml(e.message) + '<br>Hãy vào ⚙ → "Kiểm tra kết nối AI".'; }
+}
+(function () {
+    const bar = document.getElementById('floating-selection-bar'), hide = bar && bar.querySelector('button[onclick="hideSelectionBar()"]'); if (!hide) return;
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = '💬 Hỏi AI';
+    b.className = 'px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold';
+    b.onclick = () => openAskAI(currentSelectedPhrase, currentSelectedContext); hide.parentElement.insertBefore(b, hide);
+})();
+var _hts = handleTextSelection;
+handleTextSelection = function () {
+    const sel = window.getSelection(), t = sel ? sel.toString().trim() : '';
+    if (sel && sel.rangeCount && t.length > 60 && t.length <= 400 && t.indexOf('\n') < 0) {
+        const ae = document.activeElement; if (ae && /INPUT|TEXTAREA/.test(ae.tagName)) return;
+        const range = sel.getRangeAt(0); let n = range.commonAncestorContainer; if (n.nodeType === 3) n = n.parentNode;
+        currentSelectedPhrase = t; currentSelectedContext = ((n.closest && n.closest('p, div') && n.closest('p, div').textContent) || t).trim().slice(0, 400);
+        document.getElementById('selected-phrase-preview').textContent = t;
+        const bar = document.getElementById('floating-selection-bar'); bar.classList.remove('hidden');
+        const rect = range.getBoundingClientRect(), h = bar.offsetHeight || 90; let top = rect.bottom + 56;
+        if (top + h > window.innerHeight - 8) top = Math.max(140, rect.top - h - 64);
+        bar.style.top = top + 'px'; return;
+    }
+    _hts();
+};
+var _rilm = renderInstantLookupModalContent;
+renderInstantLookupModalContent = function () {
+    _rilm();
+    const row = document.querySelector('#instant-lookup-body .justify-end'), d = instantLookupDraft; if (!row || !d) return;
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = '💬 Hỏi AI về mục này';
+    b.className = 'px-4 py-2 bg-indigo-500/20 text-indigo-200 text-xs font-semibold rounded-xl border border-indigo-500/30';
+    b.onclick = () => openAskAI(d.word, d.example); row.insertBefore(b, row.firstChild);
+};
+// ===== HẾT BẢN VÁ 5 =====
+// ===== BẢN VÁ 6: dán xuống dưới bản vá 5, phía trên dòng "window.onload". Chỉ dán 1 lần =====
+
+// A) Di chuyển từ: chọn chủ đề trước → tick các từ → chọn chủ đề đích
+var _mvSel = new Set();
+function _mvOptions(exclude) {
+    const c = getTopicWordCounts();
+    return topics.filter(t => t.name !== exclude).map(t => `<option value="${escapeHtml(t.name)}">${escapeHtml(t.name)} (${c[t.name] || 0})</option>`).join('');
+}
+function renderMoveBox() {
+    const from = document.getElementById('mv-from'); if (!from) return;
+    const prev = from.value; from.innerHTML = _mvOptions(null);
+    if ([...from.options].some(o => o.value === prev)) from.value = prev;
+    renderMoveList();
+}
+function renderMoveList() {
+    const from = document.getElementById('mv-from').value, q = document.getElementById('mv-q').value.trim().toLowerCase();
+    const list = words.filter(w => w.topic === from && (!q || (w.word + ' ' + w.meaning).toLowerCase().includes(q)));
+    document.getElementById('mv-list').innerHTML = list.length ? list.map(w => `<label class="flex items-start gap-2 px-2 py-1.5 hover:bg-slate-800 cursor-pointer"><input type="checkbox" class="mt-0.5" ${_mvSel.has(w.id) ? 'checked' : ''} onchange="mvToggle('${w.id}', this.checked)"><span><b class="text-white">${escapeHtml(w.word)}</b> <span class="text-slate-400">${escapeHtml(w.meaning)}</span></span></label>`).join('') : '<div class="p-2 text-slate-500">Chủ đề này chưa có từ.</div>';
+    const to = document.getElementById('mv-to'), pt = to.value; to.innerHTML = _mvOptions(from);
+    if ([...to.options].some(o => o.value === pt)) to.value = pt;
+    mvCount();
+}
+function mvToggle(id, on) { if (on) _mvSel.add(id); else _mvSel.delete(id); mvCount(); }
+function mvCount() { const b = document.getElementById('mv-go'); if (b) b.textContent = `Chuyển ${_mvSel.size} từ đã tick`; }
+function mvAll() { words.filter(w => w.topic === document.getElementById('mv-from').value).forEach(w => _mvSel.add(w.id)); renderMoveList(); }
+function mvGo() {
+    const to = document.getElementById('mv-to').value;
+    if (!to || !_mvSel.size) { showToast('Hãy tick ít nhất 1 từ.'); return; }
+    let n = 0; words.forEach(w => { if (_mvSel.has(w.id) && w.topic !== to) { w.topic = to; n++; } });
+    _mvSel.clear(); saveState(); renderTopicManagerContent(); renderVault(); showToast(`Đã chuyển ${n} từ sang "${to}".`);
+}
+(function () {
+    const old = document.getElementById('move-word-select'), oldBox = old && old.closest('.p-4'); if (!oldBox) return;
+    oldBox.style.display = 'none';
+    const b = document.createElement('div'); b.id = 'mv-box'; b.className = 'p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2.5 text-xs';
+    b.innerHTML = `<h4 class="font-bold uppercase tracking-wider text-amber-300">⇄ Di chuyển từ vựng giữa các chủ đề</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><div><label class="block text-slate-400 mb-1">① Lấy từ chủ đề</label><select id="mv-from" onchange="_mvSel.clear();renderMoveList()" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"></select></div>
+        <div><label class="block text-slate-400 mb-1">③ Chuyển sang chủ đề</label><select id="mv-to" class="w-full px-3 py-2 bg-slate-900 border border-emerald-500/40 rounded-xl text-emerald-300"></select></div></div>
+        <div class="flex gap-2"><input id="mv-q" oninput="renderMoveList()" placeholder="② Tìm trong chủ đề này (không bắt buộc)" class="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"><button type="button" onclick="mvAll()" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-200">Chọn hết</button></div>
+        <div id="mv-list" class="max-h-52 overflow-y-auto rounded-xl bg-slate-900/60 border border-slate-800"></div>
+        <button type="button" id="mv-go" onclick="mvGo()" class="w-full px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold">Chuyển 0 từ đã tick</button>`;
+    oldBox.insertAdjacentElement('afterend', b); renderMoveBox();
+})();
+var _rtmc = renderTopicManagerContent;
+renderTopicManagerContent = function () { _rtmc(); renderMoveBox(); };
+
+// B) AI: hết chờ vô tận (25 giây/lần), báo tiến độ, lỗi dễ hiểu, sắp xếp chủ đề nhanh hơn
+var _aiOnProgress = null;
+function _friendlyAIError(m) {
+    m = String(m || '');
+    if (/Quá \d+ giây/.test(m)) return 'AI trả lời quá chậm (quá 25 giây). Hãy thử lại hoặc thử vào lúc khác.';
+    if (/api key|HTTP 40[13]|PERMISSION/i.test(m)) return 'Khóa API không hợp lệ hoặc chưa có quyền. Vào ⚙ dán lại khóa rồi bấm Kiểm tra kết nối AI.';
+    if (/429|quota|RESOURCE_EXHAUSTED/i.test(m)) return 'Đã hết lượt dùng miễn phí tạm thời. Chờ 1-2 phút rồi thử lại.';
+    if (/503|500|overload|UNAVAILABLE/i.test(m)) return 'Máy chủ Gemini đang quá tải. Thử lại sau ít phút.';
+    if (/404|not found/i.test(m)) return 'Model AI không còn dùng được với khóa này.';
+    if (/mạng|chặn|Failed to fetch/i.test(m)) return 'Trang này đang bị chặn kết nối tới Gemini, hoặc bạn mất mạng.';
+    return 'AI chưa trả lời được.';
+}
+async function _geminiOnce(model, key, text, schema) {
+    const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 25000);
+    try {
+        const body = { contents: [{ parts: [{ text }] }] };
+        if (schema) body.generationConfig = { responseMimeType: 'application/json', responseSchema: schema };
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctl.signal });
+        if (r.ok) { const j = await r.json(); return { ok: true, text: (j?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('') }; }
+        let msg = ''; try { msg = (await r.json())?.error?.message || ''; } catch (e) {}
+        return { ok: false, status: r.status, msg };
+    } catch (e) { return e.name === 'AbortError' ? { ok: false, status: -1, msg: 'Quá 25 giây chưa có phản hồi' } : { ok: false, status: 0, msg: 'Lỗi mạng hoặc bị chặn: ' + e.message }; }
+    finally { clearTimeout(tm); }
+}
+callGeminiCanvasAPI = async function (promptText, schema, opt) {
+    const key = _aiKey(); let models;
+    if (!key) models = ['gemini-2.5-flash', 'gemini-2.5-flash-preview-09-2025'];
+    else {
+        const all = await _discoverModels(key), lite = all.filter(n => /lite/.test(n)), full = all.filter(n => !/lite/.test(n));
+        models = (opt && opt.fast ? lite.concat(full) : full.concat(lite)).slice(0, 3);
+    }
+    let err = '';
+    for (let i = 0; i < models.length; i++) {
+        const model = models[i];
+        if (typeof _aiOnProgress === 'function') _aiOnProgress(model, i + 1, models.length);
+        let res = await _geminiOnce(model, key, promptText, schema);
+        if (!res.ok && res.status === 400 && schema && !/api key/i.test(res.msg)) res = await _geminiOnce(model, key, promptText + '\n\nChỉ trả về JSON thuần, không kèm chú thích.', null);
+        if (res.ok && res.text) { _aiLastError = ''; _aiUsedModel = model; return res.text.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, ''); }
+        err = `${model} → ${res.ok ? 'trả về rỗng' : 'HTTP ' + res.status + ': ' + String(res.msg).slice(0, 150)}`;
+        if (res.status === 0 || res.status === 401 || res.status === 403 || (res.status === 400 && /api key/i.test(res.msg))) break;
+    }
+    _aiLastError = err; throw new Error(err);
+};
+async function aiSortTopics() {
+    const out = document.getElementById('ai-sort-preview'), btn = document.getElementById('btn-ai-sort');
+    if (!words.length) { out.textContent = 'Kho chưa có từ nào.'; return; }
+    btn.disabled = true; out.innerHTML = '';
+    const t0 = Date.now(), tick = setInterval(() => { btn.textContent = `⏳ AI đang làm việc... ${Math.round((Date.now() - t0) / 1000)} giây`; }, 1000);
+    _aiOnProgress = (m, i, n) => { out.innerHTML = `<div class="text-slate-400">Đang hỏi model ${escapeHtml(m)} (lần ${i}/${n})...</div>`; };
+    try {
+        const all = words.slice(0, 100), chunks = []; for (let i = 0; i < all.length; i += 25) chunks.push(all.slice(i, i + 25));
+        const tj = JSON.stringify(topics.map(t => ({ name: t.name, desc: t.desc })));
+        const schema = { type: 'ARRAY', items: { type: 'OBJECT', properties: { id: { type: 'STRING' }, topic: { type: 'STRING' }, newTopicDesc: { type: 'STRING' }, reason: { type: 'STRING' } }, required: ['id', 'topic', 'reason'] } };
+        const parts = await Promise.all(chunks.map(ch => callGeminiCanvasAPI(`Xếp mỗi từ/cụm từ vào chủ đề PHÙ HỢP NHẤT.\nChủ đề hiện có: ${tj}\nQuy tắc: ưu tiên chủ đề hiện có (ghi đúng tên); chỉ đề xuất chủ đề mới (kèm newTopicDesc) khi từ không hợp chủ đề nào và có ít nhất 2 từ cùng nhóm; cụm động từ, thành ngữ, cấu trúc đi cùng giới từ thuộc "Cụm Động Từ & Giao Tiếp"; "reason" tối đa 8 từ tiếng Việt.\nDanh sách: ${JSON.stringify(ch.map(w => ({ id: w.id, word: w.word, meaning: w.meaning, topic: w.topic })))}\nTrả về MẢNG JSON đủ mọi từ.`, schema, { fast: true }).then(JSON.parse)));
+        _sortPlan = [].concat(...parts).map(r => Object.assign({}, r, { topic: cleanTerm(r.topic) })).filter(r => r.topic && words.some(w => w.id === r.id));
+        renderSortPreview();
+    } catch (e) { out.innerHTML = `<div class="p-2 rounded-xl bg-rose-950/40 border border-rose-500/30 text-rose-200"><b>❌ ${escapeHtml(_friendlyAIError(e.message))}</b><br><span class="text-[11px] opacity-70">${escapeHtml(e.message)}</span></div>`; }
+    finally { clearInterval(tick); _aiOnProgress = null; btn.disabled = false; btn.textContent = '🗂️ Nhờ AI sắp xếp từ vào chủ đề'; }
+}
+(function () {
+    const prev = document.getElementById('ai-sort-preview'), btn = document.getElementById('btn-ai-sort');
+    if (prev && prev.previousElementSibling) prev.previousElementSibling.textContent = 'Cách dùng: ① bấm nút (không cần chọn gì trước) → ② chờ AI đọc cả kho và đề xuất chủ đề cho từng từ → ③ tick những từ bạn đồng ý chuyển → ④ bấm "Áp dụng".';
+    if (btn) btn.onclick = aiSortTopics;
+})();
+
+// C) Micro: không còn "đơ", và có Cách 2 dùng mic bàn phím (luôn hoạt động, chấm xanh/đỏ ngay khi bạn nói)
+var _micLive = false;
+_micErrorText = function (c) {
+    const tip = ' 👉 Dùng Cách 2 bên dưới: bấm vào ô, bấm mic trên bàn phím rồi đọc câu.';
+    if (c === 'no-speech') return '😶 Không nghe thấy tiếng. Bấm lại và đọc to hơn.' + tip;
+    if (c === 'network') return '🌐 Nhận diện giọng nói cần có Internet.' + tip;
+    return '🚫 Trang này không cho dùng micro (mã: ' + escapeHtml(c || 'không hỗ trợ') + ').' + tip;
+};
+function _mkPron(wordId) {
+    const w = words.find(i => i.id === wordId), sentence = currentQuiz.sentence.replace(/___+/g, w ? w.word : '');
+    const tokens = sentence.split(/\s+/).filter(Boolean), norm = tokens.map(_normW);
+    return { tokens, norm, sentence, w, text: '', t0: 0, t1: 0, focus: w ? norm.indexOf(_normW(w.word)) : -1 };
+}
+recordAndEvaluatePronunciation = function (wordId) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition, mic = document.getElementById('btn-quiz-mic');
+    if (!currentQuiz) return;
+    if (activeSpeechRec && _micLive) { try { activeSpeechRec.stop(); } catch (e) {} return; }
+    if (activeSpeechRec) { try { activeSpeechRec.abort(); } catch (e) {} activeSpeechRec = null; }
+    const st = _mkPron(wordId);
+    if (!SR) { _paintPron(st, true, _micErrorText('')); return; }
+    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+    const rec = new SR(); activeSpeechRec = rec; let err = '';
+    rec.lang = 'en-US'; rec.continuous = false; rec.interimResults = true;
+    _paintPron(st, false, '⏳ Đang mở micro... (nếu trình duyệt hỏi quyền micro, hãy bấm Cho phép)');
+    const wd = setTimeout(() => { if (!_micLive) _paintPron(st, true, _micErrorText('timeout')); }, 5000);
+    rec.onstart = () => { _micLive = true; if (mic) { mic.classList.add('mic-active'); mic.innerHTML = '<i class="ph-fill ph-stop"></i> Dừng'; } _paintPron(st, false, '🎤 Đang nghe... hãy đọc to câu trên'); };
+    rec.onspeechstart = () => { st.t0 = Date.now(); };
+    rec.onresult = (e) => {
+        let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript + ' ';
+        st.text = t.trim(); st.t1 = Date.now(); if (!st.t0) st.t0 = st.t1 - 1500; _paintPron(st, false, '');
+    };
+    rec.onerror = (e) => { err = e.error || 'error'; };
+    rec.onend = () => {
+        clearTimeout(wd); _micLive = false; activeSpeechRec = null;
+        if (mic) { mic.classList.remove('mic-active'); mic.innerHTML = '<i class="ph-fill ph-microphone"></i> Bấm đọc'; }
+        _paintPron(st, true, st.text ? '' : _micErrorText(err));
+    };
+    try { rec.start(); } catch (e) { clearTimeout(wd); activeSpeechRec = null; _paintPron(st, true, _micErrorText('not-allowed')); }
+};
+function _injectKbPron() {
+    const box = document.getElementById('pronunciation-result-box'); if (!box || document.getElementById('pron-kb')) return;
+    const d = document.createElement('div'); d.id = 'pron-kb'; d.className = 'space-y-1.5 pt-1';
+    d.innerHTML = '<p class="text-[11px] text-indigo-200">🎙️ Cách 2 (luôn dùng được): bấm vào ô dưới → bấm biểu tượng mic trên bàn phím → đọc câu trên. Từ nào đọc đúng sẽ hiện xanh ngay.</p><textarea id="pron-kb-input" rows="2" placeholder="Nói vào mic bàn phím..." class="w-full px-3 py-2 bg-slate-900 border border-indigo-500/40 rounded-xl text-sm text-white"></textarea><button type="button" id="pron-kb-score" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold">Chấm điểm</button>';
+    box.insertAdjacentElement('afterend', d);
+    const inp = d.querySelector('#pron-kb-input'), wid = currentQuiz.wordObj.id; let st = null;
+    const upd = fin => { if (!st) st = _mkPron(wid); st.text = inp.value.trim(); st.t1 = Date.now(); if (!st.t0) st.t0 = st.t1 - 1500; _paintPron(st, fin, ''); };
+    inp.addEventListener('input', () => upd(false));
+    d.querySelector('#pron-kb-score').onclick = () => upd(true);
+}
+var _rqc2 = renderQuizCard;
+renderQuizCard = function () { _rqc2(); if (currentQuiz && currentQuiz.answered) _injectKbPron(); };
+// ===== HẾT BẢN VÁ 6 =====
+// ===== BẢN VÁ 7: HỖ TRỢ GEMINI 3.8 FLASH & TỰ ĐỘNG BẮT MODEL MỚI KHI GOOGLE CẬP NHẬT =====
+
+_discoverModels = async function (key) {
+    if (_aiModels && _aiModelsKey === key) return _aiModels;
+    let names = [];
+    try {
+        // Bỏ pageSize=200 gây lỗi để lấy chuẩn danh sách model từ Google
+        const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(key));
+        if (r.ok) {
+            const j = await r.json();
+            names = (j.models || [])
+                .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+                .map(m => String(m.name).replace('models/', ''))
+                .filter(n => /^gemini-/.test(n) && /flash/.test(n) && !/image|tts|live|audio|embed|robotics|computer|vision/.test(n));
+        }
+    } catch (e) {}
+
+    const rank = n => {
+        const v = parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1]);
+        return v * 100 + (/latest/.test(n) ? 5 : 0) - (/lite/.test(n) ? 3 : 0) - (/preview/.test(n) ? 2 : 0);
+    };
+    names.sort((a, b) => rank(b) - rank(a));
+
+    // Đưa gemini-3.8-flash lên ưu tiên hàng đầu
+    const defaults = ['gemini-3.8-flash', 'gemini-3.0-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+    _aiModels = defaults.concat(names).filter((n, i, a) => a.indexOf(n) === i);
+    _aiModelsKey = key;
+    return _aiModels;
+};
+
+callGeminiCanvasAPI = async function (promptText, schema, opt) {
+    const key = _aiKey();
+    let models = key
+        ? (await _discoverModels(key)).slice(0, 6)
+        : ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-preview-09-2025'];
+
+    let err = '';
+    const tried = new Set();
+
+    for (let i = 0; i < models.length; i++) {
+        const model = models[i];
+        if (!model || tried.has(model)) continue;
+        tried.add(model);
+
+        if (typeof _aiOnProgress === 'function') _aiOnProgress(model, i + 1, models.length);
+
+        let res = await _geminiOnce(model, key, promptText, schema);
+        if (!res.ok && res.status === 400 && schema && !/api key/i.test(res.msg)) {
+            res = await _geminiOnce(model, key, promptText + '\n\nChỉ trả về JSON thuần, không kèm chú thích.', null);
+        }
+
+        if (res.ok && res.text) {
+            _aiLastError = '';
+            _aiUsedModel = model;
+            return res.text.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, '');
+        }
+
+        // Tự động bắt tên model mới nếu Google báo lỗi "Please update your code to use models/..."
+        const suggestedMatch = String(res.msg || '').match(/use\s+models\/([a-zA-Z0-9._-]+)/i);
+        if (suggestedMatch && suggestedMatch[1] && !tried.has(suggestedMatch[1])) {
+            models.splice(i + 1, 0, suggestedMatch[1]);
+        }
+
+        err = `${model} → ${res.ok ? 'trả về rỗng' : 'HTTP ' + res.status + ': ' + String(res.msg).slice(0, 150)}`;
+        if (res.status === 0 || res.status === 401 || res.status === 403 || (res.status === 400 && /api key/i.test(res.msg))) break;
+    }
+
+    _aiLastError = err;
+    throw new Error(err);
+};
+// ===== HẾT BẢN VÁ 7 =====
+
+
+        window.onload = () => { loadState(); setVaultFilter('all'); switchTab('vault'); };
+
+    </script>
+
+</body>
+
+</html>
